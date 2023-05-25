@@ -1,0 +1,54 @@
+#!/bin/bash
+
+set -o errexit   # abort on nonzero exitstatus
+set -o nounset   # abort on unbound variable
+set -o pipefail  # don't hide errors within pipes
+
+function yes_or_no {
+    while true; do
+        read -rp "$* [y/n]: " yn
+        case $yn in
+            [Yy]*) return 0  ;;
+            [Nn]*) echo "Aborted" ; return  1 ;;
+        esac
+    done
+}
+
+warning="WARNING
+
+This script will destroy the the filesystem on /data
+in order to replace it with a new encrypted LUKS volume. Any
+existing data will be lost. 
+
+You will be prompted to enter a LUKS unlock password at
+various points. Please choose something long, easy to
+type and easy to remember (4 random words work well, ref:
+https://xkcd.com/936/).
+
+Do you wish to proceed?"
+
+# TODO
+# - Update script to pick up if exited mid-way, in paricular
+#   people may provide the incorrect YES response to cryptsetup
+
+yes_or_no "$warning" || exit
+apt install -y cryptsetup
+systemctl stop minknow
+intermediate_mounts=$(mount | awk '{ print $3 }' | grep intermediate)
+for intermediate_mount in $intermediate_mounts; do
+    umount "$intermediate_mount";
+done
+umount /data
+data_device_name=$(readlink /dev/disk/by-label/data | grep --only-matching "md.*")
+data_device=/dev/"$data_device_name"
+wipefs --all "$data_device"
+cryptsetup luksFormat --type=luks2 "$data_device"
+cryptsetup open "$data_device" data
+mkfs.ext4 -L data /dev/mapper/data
+sed --in-place --expression 's/UUID=.* \/data/\/dev\/mapper\/data \/data/g' /etc/fstab
+systemctl daemon-reload
+mount /data
+chown prom:prom /data
+chmod 775 /data
+echo "data $data_device none luks" >> /etc/cryptab
+systemctl start minknow
