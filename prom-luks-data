@@ -50,5 +50,5 @@ systemctl daemon-reload
 mount /data
 chown prom:prom /data
 chmod 775 /data
-echo "data $data_device none luks" >> /etc/cryptab
+echo "data $data_device none luks" >> /etc/crypttab
 systemctl start minknow
