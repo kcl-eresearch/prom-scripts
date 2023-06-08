@@ -20,6 +20,12 @@ This script will destroy the the filesystem on /data
 in order to replace it with a new encrypted LUKS volume. Any
 existing data will be lost. 
 
+This script comes with no warranty and should only be run by
+someone who either:
+a) Can clean up the system after any failures
+b) Has someone else on hand to clean up the system after
+any failures
+
 You will be prompted to enter a LUKS unlock password at
 various points. Please choose something long, easy to
 type and easy to remember (4 random words work well, ref:
@@ -28,12 +34,13 @@ https://xkcd.com/936/).
 Do you wish to proceed?"
 
 # TODO
-# - Update script to pick up if exited mid-way, in paricular
-#   people may provide the incorrect YES response to cryptsetup
-# - Check for and stop docker if running and stop it
+# - Check for and stop docker if running
 # - Check for /data swapfile and swapoff 
-# - Are errors printed, e.g. umount failing?
-# - Add warning about leaving system in failed state
+
+if lsblk | grep crypt; then
+   echo "Looks like you've you already setup drive encryption, exiting"
+   exit 0
+fi
 
 yes_or_no "$warning" || exit
 
@@ -47,8 +54,7 @@ if ! systemctl stop minknow; then
     exit 1
 fi
 
-intermediate_mounts=$(mount | awk '{ print $3 }' | grep intermediate)
-if [[ $intermediate_mounts = "" ]]; then
+if ! intermediate_mounts=$(mount | awk '{ print $3 }' | grep intermediate); then
     echo "No intermediate mounts to unmount"
 else
     for intermediate_mount in $intermediate_mounts; do
@@ -57,22 +63,87 @@ else
 fi
 
 if ! umount /data; then
-    echo "Unable to umount /data" >&2
+    if [[ $? != "32" ]]; then
+        echo "/data already unmounted, possibly due to previously aborted attempt"
+    else
+        echo "Unable to umount /data" >&2
+        exit 1
+    fi
+fi
+
+data_device=""
+if ! data_device_name=$(readlink /dev/disk/by-label/data | grep --only-matching "md.*"); then
+    echo "No device currently labelled /data possibly due to previously aborted attempt"
+    echo "Looking for empty raid array"
+    if ! data_device_name=$(cat /proc/mdstat | grep -v Personalities | grep raid0 | awk '{ print $1}'); then
+        "Cannot find any raid0 device"
+        exit 1
+    else
+	device_count=$(echo $data_device_name | wc -l)
+	if [[ device_count -eq "1" ]]; then
+            data_device=/dev/"$data_device_name"
+        else
+            echo "More than one raid0 device found, aborting" >&2
+	    exit 1
+	fi
+    fi
+else
+   data_device=/dev/"$data_device_name"
+fi
+
+if ! wipefs --all "$data_device"; then
+    echo "Failed to wipe existing filesystem data from $data_device" >&2
     exit 1
 fi
 
-# TODO how to resume from here if we aborted cryptsetup step below in previous run
-# need to test whether by-label will exist after failure and/or post reboot
-data_device_name=$(readlink /dev/disk/by-label/data | grep --only-matching "md.*")
-data_device=/dev/"$data_device_name"
-wipefs --all "$data_device"
-cryptsetup luksFormat --type=luks2 "$data_device"
-cryptsetup open "$data_device" data
-mkfs.ext4 -L data /dev/mapper/data
-sed --in-place --expression 's/UUID=.* \/data/\/dev\/mapper\/data \/data/g' /etc/fstab
-systemctl daemon-reload
-mount /data
-chown prom:prom /data
-chmod 775 /data
-echo "data $data_device none luks" >> /etc/crypttab
-systemctl start minknow
+if ! cryptsetup luksFormat --type=luks2 "$data_device"; then
+    echo "cryptsetup failed" >&2
+    exit 1
+fi
+
+if ! cryptsetup open "$data_device" data; then
+    echo "Failed to open LUKS volume on $data_device" >&2
+    exit 1
+fi
+
+if ! mkfs.ext4 -L data /dev/mapper/data; then
+    echo "Failed to create ext4 filesystem on LUKS volume" >&2
+    exit 1
+fi
+
+if ! sed --in-place --expression 's/UUID=.* \/data/\/dev\/mapper\/data \/data/g' /etc/fstab; then
+    echo "Failed to update fstab" >&2
+    exit 1
+fi
+
+if ! systemctl daemon-reload; then
+    echo "daemon-reload failed" >&2
+    exit 1
+fi
+
+if ! mount /data; then
+   echo "Failed to mount /data" >&2
+   exit 1
+fi
+
+if ! chown prom:prom /data; then
+   echo "Failed to set /data permissions for prom user account" >&2
+   exit 1
+fi
+
+if ! chmod 775 /data; then
+   echo "Failed to update /data permissions" >&2
+   exit 1
+fi
+
+if ! echo "data $data_device none luks" >> /etc/crypttab; then
+   echo "Failed to update crypttab" >&2
+   exit 1
+fi
+
+if ! systemctl start minknow; then
+   echo "Failed to restart minknow service" >&2
+   exit 1
+fi
+
+echo "/data should now be LUKS encrypted, please kick the tyres :-)"
