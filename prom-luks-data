@@ -30,15 +30,39 @@ Do you wish to proceed?"
 # TODO
 # - Update script to pick up if exited mid-way, in paricular
 #   people may provide the incorrect YES response to cryptsetup
+# - Check for and stop docker if running and stop it
+# - Check for /data swapfile and swapoff 
+# - Are errors printed, e.g. umount failing?
+# - Add warning about leaving system in failed state
 
 yes_or_no "$warning" || exit
-apt install -y cryptsetup
-systemctl stop minknow
+
+if ! apt install -y cryptsetup; then
+   echo "Unable to install cryptsetup" >&2 
+   exit 1
+fi
+
+if ! systemctl stop minknow; then
+    echo "Unable to stop minknow service" >&2
+    exit 1
+fi
+
 intermediate_mounts=$(mount | awk '{ print $3 }' | grep intermediate)
-for intermediate_mount in $intermediate_mounts; do
-    umount "$intermediate_mount";
-done
-umount /data
+if [[ $intermediate_mounts = "" ]]; then
+    echo "No intermediate mounts to unmount"
+else
+    for intermediate_mount in $intermediate_mounts; do
+        umount "$intermediate_mount";
+    done
+fi
+
+if ! umount /data; then
+    echo "Unable to umount /data" >&2
+    exit 1
+fi
+
+# TODO how to resume from here if we aborted cryptsetup step below in previous run
+# need to test whether by-label will exist after failure and/or post reboot
 data_device_name=$(readlink /dev/disk/by-label/data | grep --only-matching "md.*")
 data_device=/dev/"$data_device_name"
 wipefs --all "$data_device"
