@@ -75,11 +75,11 @@ data_device=""
 if ! data_device_name=$(readlink /dev/disk/by-label/data | grep --only-matching "md.*"); then
     echo "No device currently labelled /data possibly due to previously aborted attempt"
     echo "Looking for empty raid array"
-    if ! data_device_name=$(cat /proc/mdstat | grep -v Personalities | grep raid0 | awk '{ print $1}'); then
+    if ! data_device_name=$(grep -v Personalities /proc/mdstat | grep raid0 | awk '{ print $1}'); then
         "Cannot find any raid0 device"
         exit 1
     else
-	device_count=$(echo $data_device_name | wc -l)
+	device_count=$(echo "$data_device_name" | wc -l)
 	if [[ device_count -eq "1" ]]; then
             data_device=/dev/"$data_device_name"
         else
