@@ -38,16 +38,30 @@ Do you wish to proceed?"
 # - Check for /data swapfile and swapoff 
 
 if lsblk | grep crypt; then
-   echo "Looks like you've you already setup drive encryption, exiting"
-   exit 0
+    echo "Looks like you've you already setup drive encryption, exiting"
+    exit 0
 fi
 
 yes_or_no "$warning" || exit
 
 if ! apt install -y cryptsetup; then
-   echo "Unable to install cryptsetup" >&2 
-   exit 1
+    echo "Unable to install cryptsetup" >&2 
+    exit 1
 fi
+
+if systemctl status docker; then
+    if ! systemctl stop docker; then
+        echo "Unable to stop docker" >&2
+        exit 1
+    fi
+fi
+
+if swapon | grep "/data/.system/swapfile"; then
+    if ! swapoff /data/.system/swapfile; then
+        echo "Unable to disable swapfile" >&2
+        exit 1
+    fi
+fi   
 
 if ! systemctl stop minknow; then
     echo "Unable to stop minknow service" >&2
