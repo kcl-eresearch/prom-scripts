@@ -33,10 +33,6 @@ https://xkcd.com/936/).
 
 Do you wish to proceed?"
 
-# TODO
-# - Check for and stop docker if running
-# - Check for /data swapfile and swapoff 
-
 if lsblk | grep crypt; then
     echo "Looks like you've you already setup drive encryption, exiting"
     exit 0
