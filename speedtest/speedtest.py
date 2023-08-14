@@ -38,7 +38,7 @@ def thread_worker(src_host):
         time.sleep(0.1)
 
     start_time = datetime.datetime.now()
-    rsync_result = ssh_command(src_host, f"/usr/bin/rsync -a --stats --remove-source-files {src_file} {args.dst_user}@{args.dst_host}:{args.dst_dir}")
+    rsync_result = ssh_command(src_host, f"/usr/bin/rsync -e 'ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no' --stats --remove-source-files {src_file} {args.dst_user}@{args.dst_host}:{args.dst_dir}")
     ssh_command(src_host, f"/usr/bin/lftp -e 'rm {args.dst_dir}/{filename}; exit' sftp://{args.dst_user}:NONE@{args.dst_host}")
 
     speed = None
