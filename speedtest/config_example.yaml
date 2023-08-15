@@ -1,0 +1,33 @@
+---
+source:
+  hosts:
+  - prom1.example.com
+  - prom2.example.com
+  - prom3.example.com
+  dir: /data
+  user: prom
+
+destination:
+  host: destination.example.com
+  user: username
+  dir: /srv/projects/promdata
+
+ssh_key:
+  private_key_path: /path/to/private/key
+  vault:
+    host: vault.example.com
+    port: 8200
+    auth_cert: /etc/my_vault_cert.pem
+    auth_key: /etc/my_vault_key.pem
+    mount_point: secrets
+    path: projects/prom
+    passphrase_key: ssh_key_passphrase
+
+file_size: 5120
+
+influxdb:
+  host: influxdb.example.com
+  port: 8086
+  username: influxdb_username
+  password: influxdb_password
+  database: influxdb_database

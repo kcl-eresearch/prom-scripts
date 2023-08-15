@@ -1,0 +1,23 @@
+#!/usr/bin/python3
+
+import argparse
+import hvac
+import influxdb
+import os
+import subprocess
+import sys
+import yaml
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+parser = argparse.ArgumentParser()
+parser.add_argument("--config_file", required=True)
+parser.add_argument("--location_speedtest", default=f"{script_dir}/speedtest")
+parser.add_argument("--location_sshpass", default=f"{script_dir}/sshpass")
+args = parser.parse_args()
+
+try:
+    with open(args.config_file) as fh:
+        config = yaml.safe_load(fh)
+except Exception as e:
+    sys.exit(f"Failed loading config file {args.config_file}: {e}")
+
