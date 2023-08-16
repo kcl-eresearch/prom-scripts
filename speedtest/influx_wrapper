@@ -65,7 +65,7 @@ if "vault" in config["ssh_key"]:
         sys.exit("Vault client is not authenticated")
 
     try:
-        result = client.secrets.kv.v2.read_secret_version(path=config["ssh_key"]["vault"]["path"], mount_point=config["ssh_key"]["vault"]["mount_point"], raise_on_deleted_version=True)
+        result = client.secrets.kv.v2.read_secret_version(path=config["ssh_key"]["vault"]["path"], mount_point=config["ssh_key"]["vault"]["mount_point"])
     except Exception as e:
         sys.exit(f"Could not retrieve Vault secrets from {config['ssh_key']['vault']['mount_point']}/{config['ssh_key']['vault']['path']}: {e}")
 
