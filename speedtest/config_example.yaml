@@ -12,17 +12,6 @@ destination:
   user: username
   dir: /srv/projects/promdata
 
-ssh_key:
-  private_key_path: /path/to/private/key
-  vault:
-    host: vault.example.com
-    port: 8200
-    auth_cert: /etc/my_vault_cert.pem
-    auth_key: /etc/my_vault_key.pem
-    mount_point: secrets
-    path: projects/prom
-    passphrase_key: ssh_key_passphrase
-
 file_size: 5120
 
 influxdb:
@@ -31,3 +20,19 @@ influxdb:
   username: influxdb_username
   password: influxdb_password
   database: influxdb_database
+
+ssh_key:
+  # Specify if not using Vault (see below)
+  private_key_path: /path/to/private/key
+
+  # Optional - pull private key/passphrase from Hashicorp Vault
+  # using certificate authentication
+  vault:
+    host: vault.example.com
+    port: 8200
+    auth_cert: /etc/my_vault_cert.pem
+    auth_key: /etc/my_vault_key.pem
+    mount_point: secrets
+    path: projects/prom
+    private_key_key: private_key
+    passphrase_key: ssh_key_passphrase
