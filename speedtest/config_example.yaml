@@ -25,7 +25,7 @@ ssh_key:
   # Specify if not using Vault (see below)
   private_key_path: /path/to/private/key
 
-  # Optional - pull private key/passphrase from Hashicorp Vault
+  # Optional - pull private key from Hashicorp Vault
   # using certificate authentication
   vault:
     host: vault.example.com
@@ -35,4 +35,3 @@ ssh_key:
     mount_point: secrets
     path: projects/prom
     private_key_key: private_key
-    passphrase_key: ssh_key_passphrase
