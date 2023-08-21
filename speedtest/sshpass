@@ -1,3 +1,0 @@
-#!/bin/bash
-
-echo "${SPEEDTEST_SSH_PASSPHRASE}"
