@@ -18,7 +18,8 @@ def ssh_command(host, command):
         result = subprocess.run(["/usr/bin/ssh", "-A", "-o", "StrictHostKeyChecking=no", "-o", "PasswordAuthentication=no", "-l", args.src_user, host, command], capture_output=True, text=True, check=True)
 
     except Exception as e:
-        sys.exit(f"Failed running SSH command {command} on {host}: {e}")
+        sys.stderr.write(f"Failed running SSH command {command} on {host}: {e}\n")
+        os._exit(1)
 
     return result
 
@@ -30,7 +31,8 @@ def thread_worker(src_host):
     src_file = f"{args.src_dir}/{filename}"
     dd_result = ssh_command(src_host, f"/usr/bin/dd if=/dev/urandom of={src_file} bs=1M count={args.file_size}")
     if f"\n{args.file_size * 1024 * 1024} bytes" not in dd_result.stderr:
-        sys.exit(f"Unexpected output from dd: {dd_result.stderr}")
+        sys.stderr.write(f"Unexpected output from dd: {dd_result.stderr}\n")
+        os._exit(1)
 
     dd_done[src_host] = True
 
@@ -48,7 +50,8 @@ def thread_worker(src_host):
             speed = float(m.group(1).replace(",", ""))
 
     if not speed:
-        sys.exit(f"Could not determine speed of rsync for {src_host}")
+        sys.stderr.write(f"Could not determine speed of rsync for {src_host}\n")
+        os._exit(1)
 
     result = {
         "duration": (datetime.datetime.now() - start_time).total_seconds(),
@@ -72,7 +75,7 @@ threads = []
 dd_done = {}
 
 results = {}
-results["start_utc"] = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+results["start_utc"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 results["config"] = {}
 results["config"]["destination"] = {"host": args.dst_host, "dir": args.dst_dir}
 results["config"]["file_size"] = args.file_size * 1024 * 1024

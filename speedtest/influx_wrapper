@@ -1,0 +1,123 @@
+#!/usr/bin/python3
+
+import argparse
+import hvac
+import influxdb
+import os
+import re
+import signal
+import subprocess
+import sys
+import yaml
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+parser = argparse.ArgumentParser()
+parser.add_argument("--config_file", required=True)
+parser.add_argument("--location_speedtest", default=f"{script_dir}/speedtest")
+args = parser.parse_args()
+
+try:
+    with open(args.config_file) as fh:
+        config = yaml.safe_load(fh)
+except Exception as e:
+    sys.exit(f"Failed loading config file {args.config_file}: {e}")
+
+if "vault" not in config["ssh_key"] and "private_key_path" not in config["ssh_key"]:
+    sys.exit("No SSH private key source specified")
+
+test_command = [
+    args.location_speedtest,
+    "--src_user", config["source"]["user"],
+    "--src_dir", config["source"]["dir"],
+    "--dst_host", config["destination"]["host"],
+    "--dst_user", config["destination"]["user"],
+    "--dst_dir", config["destination"]["dir"],
+    "--file_size", str(config["file_size"])
+]
+
+for host in config["source"]["hosts"]:
+    test_command.extend(["--src_host", host])
+
+try:
+    result = subprocess.run(["/usr/bin/ssh-agent"], check=True, capture_output=True, text=True).stdout
+except Exception as e:
+    sys.exit(f"Failed running ssh_agent: {e}")
+
+for line in list(map(str.strip, re.split(r"[;\n]", result))):
+    m = re.match(r"^(SSH_AGENT_PID|SSH_AUTH_SOCK)=(.+)$", line)
+    if m:
+        os.environ[m.group(1)] = m.group(2)
+
+if "vault" in config["ssh_key"]:
+    try:
+        client = hvac.Client(
+            url=f"https://{config['ssh_key']['vault']['host']}:{config['ssh_key']['vault']['port']}",
+            verify="/etc/ssl/certs/ca-certificates.crt",
+            cert=(config["ssh_key"]["vault"]["auth_cert"], config["ssh_key"]["vault"]["auth_key"])
+        )
+        client.auth.cert.login()
+    except Exception as e:
+        sys.exit(f"Failed to connect to Vault server {config['ssh_key']['vault']['host']}: {e}")
+
+    if not client.is_authenticated():
+        sys.exit("Vault client is not authenticated")
+
+    try:
+        result = client.secrets.kv.v2.read_secret_version(path=config["ssh_key"]["vault"]["path"], mount_point=config["ssh_key"]["vault"]["mount_point"], raise_on_deleted_version=True)
+    except Exception as e:
+        sys.exit(f"Could not retrieve Vault secrets from {config['ssh_key']['vault']['mount_point']}/{config['ssh_key']['vault']['path']}: {e}")
+
+ssh_add_command = ["/usr/bin/ssh-add"]
+ssh_add_env = dict(os.environ)
+
+if "private_key_path" in config["ssh_key"]:
+    ssh_add_command.append(config["ssh_key"]["private_key_path"])
+    try:
+        subprocess.run(ssh_add_command, env=ssh_add_env, check=True, capture_output=True)
+    except Exception as e:
+        sys.exit(f"Failed adding SSH key to agent: {e}")
+
+elif "private_key_key" in config["ssh_key"]["vault"]:
+    ssh_add_command.append("-")
+    try:
+        subprocess.run(ssh_add_command, env=ssh_add_env, input=result["data"]["data"][config["ssh_key"]["vault"]["private_key_key"]].encode(), check=True, capture_output=True)
+    except Exception as e:
+        sys.exit(f"Failed adding SSH key to agent: {e}")
+
+try:
+    result = yaml.safe_load(subprocess.run(test_command, check=True, capture_output=True, text=True).stdout)
+except Exception as e:
+    sys.exit(f"Failed running command {' '.join(test_command)}: {e}")
+
+try:
+    os.kill(int(os.environ["SSH_AGENT_PID"]), signal.SIGTERM)
+except Exception as e:
+    sys.stderr.write(f"Failed killing ssh-agent (pid {os.environ['SSH_AGENT_PID']}: {e})\n")
+
+payload = []
+
+for source, stats in result["stats"]["individual"].items():
+    payload.append({
+        "measurement": "throughput",
+        "time": result["start_utc"],
+        "fields": {
+            "bytes_per_second": stats["speed"]
+        },
+        "tags": {
+            "destination": result["config"]["destination"]["host"],
+            "source": source
+        }
+    })
+
+try:
+    client = influxdb.InfluxDBClient(
+        host=config["influxdb"]["host"],
+        port=config["influxdb"]["port"],
+        username=config["influxdb"]["username"],
+        password=config["influxdb"]["password"],
+        ssl=True,
+        verify_ssl=True
+    )
+    client.write_points(payload, database=config["influxdb"]["database"])
+except Exception as e:
+    sys.exit(f"Failed writing to InfluxDB: {e}")
