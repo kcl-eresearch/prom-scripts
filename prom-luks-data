@@ -45,7 +45,7 @@ if ! apt install -y cryptsetup; then
     exit 1
 fi
 
-if systemctl status docker; then
+if systemctl is-active docker; then
     if ! systemctl stop docker; then
         echo "Unable to stop docker" >&2
         exit 1
