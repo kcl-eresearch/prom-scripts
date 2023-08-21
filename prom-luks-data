@@ -106,7 +106,7 @@ if ! wipefs --all "$data_device"; then
     exit 1
 fi
 
-if ! cryptsetup luksFormat --type=luks2 "$data_device"; then
+if ! cryptsetup --verbose luksFormat --type=luks2 "$data_device"; then
     echo "cryptsetup failed" >&2
     exit 1
 fi
