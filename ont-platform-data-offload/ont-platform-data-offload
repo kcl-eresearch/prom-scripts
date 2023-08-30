@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) 2021, Oxford Nanopore Technologies
+#
+
+# vim: tabstop=4:shiftwidth=4:expandtab:smarttab:autoindent:filetype=sh:
+# shellcheck disable=SC2154 # Don't warn about lowercase variables declared elsewhere
+
+# ont-platform-data-offload
+# Monitor a directory for new files and copy/move them to a new location.
+# Designed to be run as a daemon started by systemd.
+#
+# Change Log
+#          Date
+# Version  (dd-MMM-yy)  Author and Notes
+#     1.0  20-Jan-2021  bruce.ashford@nanoporetech.com
+#                       Initial version
+#
+
+# Read config file to override defaults below
+CONF_FILE="/etc/systemd/ont-platform-data-offload.conf"
+if [[ -f ${CONF_FILE} ]]; then
+    # shellcheck source=../../../../etc/systemd/ont-platform-data-offload.conf
+    if ! source "${CONF_FILE}"; then
+        echo "Unable to read configuration file (${CONF_FILE}), exiting." >&2
+    fi
+fi
+
+# Default settings
+# SOURCE_DIR and DESTINATION_DIR: Have no sensible default setting. They either
+#    need to be specified in the CONF_FILE or provided as variables on the
+#    command line.
+MATCH_SUFFIXES="${MATCH_SUFFIXES:-fast5 pod5 fastq fastq.gz txt html pdf}"
+MAX_TRANSFERS="${MAX_TRANSFERS:-5}"
+LOG="${LOG-/data/data-offload.log}" # leave empty to log to stdout
+DATE_FORMAT="${DATE_FORMAT:-%b %d %T}" # short month, day, hour, minute, second - mimics journalctl format
+
+# Treat an unbound variable as an error
+set -u
+
+# Global variables
+declare -A in_progress=()
+declare -a rsync_opts=( "--owner" "--group" "--perms" "--times" "--update" "--quiet" )
+declare    aborted=false
+declare -a in_progress_opts
+
+# Catch common interrupt signals so current transfers can be completed before
+# the script exits
+trap catch_signal SIGINT SIGTERM SIGHUP SIGQUIT
+
+
+main() {
+    declare -a match_suffixes_opts=()
+    declare    new_file
+    declare -i new_pid
+
+    [[ -n ${LOG} ]] && echo "See ${LOG} for more details."
+
+    if ! cd "${SOURCE_DIR}"; then
+        local_log "Could not change directory to ${SOURCE_DIR}, exiting."
+        exit 1
+    fi
+    local_log "Working directory: ${PWD}"
+
+    if [[ ! -d ${DESTINATION_DIR} ]]; then
+        local_log "${DESTINATION_DIR} does not exist or is not a directory, exiting."
+        exit 1
+    fi
+
+    match_suffixes_opts=( '-regextype' 'posix-egrep' )
+    if [[ -n "${MATCH_SUFFIXES:-}" ]]; then
+        match_suffixes_opts+=( '-regex'  )
+        match_suffixes_opts+=( ".*\.(${MATCH_SUFFIXES// /|})" ) # swap spaces for pipes
+    fi
+
+    # Main loop, runs until we receive a signal
+    while [[ ${aborted} != "true" ]]; do
+        local_log '----'
+
+        # Update our list of running jobs
+        remove_finished_jobs
+
+        # Are we already busy?
+        if [[ ${#in_progress[@]} -ge "${MAX_TRANSFERS}" ]]; then
+            local_log "Waiting for one of ${!in_progress[*]} to complete..."
+            wait -n "${!in_progress[@]}"
+            continue
+        fi
+
+        # Do we have any new files to transfer?
+        build_in_progress_opts
+		#if ! new_file=$(find . -type f  "${match_suffixes_opts[@]}" "${in_progress_opts[@]}" -print | head -n1); then
+		if ! new_file=$(find . -type f  "${match_suffixes_opts[@]}" "${in_progress_opts[@]}" -print -quit); then
+		    continue # find failed or was interrupted
+        elif [[ -n ${new_file} ]]; then
+            transfer "${new_file}" &
+            new_pid=$!
+            in_progress[${new_pid}]="${new_file}"
+            local_log "Transfer started: ${new_file} (${new_pid})"
+            continue
+        fi
+
+        # Not busy and nothing to do so wait for a new file to appear.
+        # The transfer function() will wait for up to 1.5s for a open file to
+        # be closed. If it is not closed in that time, it will give up. Having
+        # a timeout set here enables a periodic full rescan of the source
+        # directory and a retry of such files.
+        local_log "Waiting for a new file..."
+        inotifywait --quiet --quiet --event create --event moved_to --timeout $(( 20 * 60 )) --recursive .
+        case $? in
+            0 ) local_log "...new file arrived";;
+            1 ) local_log "...inotifywait quit unexpectedly";;
+            2 ) local_log "...resetting after waiting for 20 minutes";;
+        esac
+    done
+
+    # Once we've been told to stop
+    if [[ ${#in_progress[@]} -gt 0 ]]; then
+        local_log "Waiting for current transfers to complete..."
+        wait "${!in_progress[@]}"
+    fi
+
+    local_log "Exiting"
+    exit 0
+}
+
+
+build_in_progress_opts() {
+# Build an array of 'find' options to ignore files that are already being
+# transferred.
+    if [[ ${#in_progress[@]} -gt 0 ]]; then
+        in_progress_opts=( "!" "(" )
+        for pid in "${!in_progress[@]}"; do
+            in_progress_opts+=( "-wholename" "${in_progress[$pid]}" "-or" )
+        done
+        in_progress_opts[-1]=")" # replace the last '-or' with ')'
+    else
+        in_progress_opts=( "-true" ) # use '-true' as a no-op, an empty array is seen as a new path
+    fi
+}
+
+
+remove_finished_jobs() {
+# Find which processes have completed
+    declare    pid
+    declare    pids
+    declare    pids_re
+    declare -i n
+    declare    finished_jobs
+
+    #pids=$(jobs -l | awk '$3 == "Running" {printf "%s ", $2}') # space separated list of pids of sub-processes
+    #pids="${pids%% }" # remove the trailing space
+    #pids_re="^(${pids// /|})$" # prepend '^(', swap spaces for pipes, append ')$'
+
+    # ToDo: Test - no awk fork
+    pids=""; pids_re="^("
+    for pid in $(jobs -rp); do
+        pids+="${pid} "
+        pids_re+="${pid}|"
+    done
+    pids_re="${pids_re%%|})$" # remove the last pipe and append ')$'
+
+    finished_jobs=""
+    for n in "${!in_progress[@]}"; do
+        if [[ ! ${n} =~ ${pids_re} ]]; then
+            unset in_progress["${n}"]
+            finished_jobs+="${n} "
+        fi
+    done
+
+    local_log " Running jobs: ${pids}"
+    local_log "Finished jobs: ${finished_jobs}"
+}
+
+
+transfer() {
+# Move a file from under the current directory to ${DESTINATION_DIR},
+# maintaining the directory structure.
+    declare file="$1"
+
+    declare -i lsof_checks=3
+    declare    file_closed='false'
+    declare    active_pids
+    declare    rsync_output
+
+    # Ignore common signals in this sub-shell
+    trap '' SIGINT SIGTERM SIGHUP SIGQUIT
+
+    # Make sure the file is closed before we start to transfer it
+    while [[ ${file_closed} == 'false' ]]; do
+        active_pids=$(lsof -t -f -- "${file}" 2>/dev/null)
+        if [[ -n ${active_pids} ]]; then
+            local_log " - Process(s) ${active_pids} still has ${file} open, sleeping."
+            sleep 5
+        else
+            file_closed='true'
+            continue
+        fi
+
+        if [[ $(( --lsof_checks )) == 0 ]]; then
+            local_log " - Process(s) ${active_pids} still has ${file} open, not transferred."
+            return
+        fi
+    done
+
+    # Emulate transfers of larger files:
+    #sleep "$(( ((RANDOM % 25) + 5 ) ))"
+
+    # Rsync all directories and the file we want to transfer.
+    # Maybe not an obvious way of doing this but only requires one fork.
+    rsync_output=$(rsync "${rsync_opts[@]}" \
+        --recursive \
+        --remove-source-files \
+        --filter '+ */' \
+        --filter "+ ${file#.}" \
+        --filter '- *' \
+        ./ "${DESTINATION_DIR}" 2>&1)
+    [[ -n ${rsync_output} ]] && local_log " - rsync: ${rsync_output}"
+
+    # Alternative 1
+    #rsync "${rsync_opts[@]}" --recursive --filter '+ */' --filter '- *'  ./ "${DESTINATION_DIR}"
+    #rsync "${rsync_opts[@]}" --remove-source-files "${file}" "${DESTINATION_DIR}${file#.}"
+
+    # Alternative 2
+    #rsync "${rsync_opts[@]}" --recursive --filter '+ */' --filter '- *'  ./ "${DESTINATION_DIR}"
+    #mv "${file}" "${DESTINATION_DIR}${file#.}"
+
+    local_log " - Transfer complete: ${file}"
+}
+
+
+local_log() {
+    if [[ -n ${LOG} ]]; then
+        echo "$(date "+$DATE_FORMAT") $*" >> "${LOG}"
+    else
+        echo "$(date "+$DATE_FORMAT") $*"
+    fi
+}
+
+
+catch_signal() {
+    local_log "Caught a signal, exiting"
+    aborted='true'
+}
+
+
+main "$@"
