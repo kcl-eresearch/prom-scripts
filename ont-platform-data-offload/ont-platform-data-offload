@@ -15,6 +15,9 @@
 # Version  (dd-MMM-yy)  Author and Notes
 #     1.0  20-Jan-2021  bruce.ashford@nanoporetech.com
 #                       Initial version
+#                       Initial version
+#     2.0  04-Sep-2023  xand.meaden@kcl.ac.uk
+#                       Add support for rsync-over-ssh
 #
 
 # Read config file to override defaults below
@@ -23,17 +26,21 @@ if [[ -f ${CONF_FILE} ]]; then
     # shellcheck source=../../../../etc/systemd/ont-platform-data-offload.conf
     if ! source "${CONF_FILE}"; then
         echo "Unable to read configuration file (${CONF_FILE}), exiting." >&2
+        exit 1
     fi
 fi
 
 # Default settings
-# SOURCE_DIR and DESTINATION_DIR: Have no sensible default setting. They either
+# SOURCE_DIR and DESTINATION*: Have no sensible default setting. They either
 #    need to be specified in the CONF_FILE or provided as variables on the
 #    command line.
 MATCH_SUFFIXES="${MATCH_SUFFIXES:-fast5 pod5 fastq fastq.gz txt html pdf}"
 MAX_TRANSFERS="${MAX_TRANSFERS:-5}"
 LOG="${LOG-/data/data-offload.log}" # leave empty to log to stdout
 DATE_FORMAT="${DATE_FORMAT:-%b %d %T}" # short month, day, hour, minute, second - mimics journalctl format
+DESTINATION_HOST="${DESTINATION_HOST:-}"
+DESTINATION_USER="${DESTINATION_USER:-}"
+SSH_KEY="${SSH_KEY:-}"
 
 # Treat an unbound variable as an error
 set -u
@@ -43,6 +50,30 @@ declare -A in_progress=()
 declare -a rsync_opts=( "--owner" "--group" "--perms" "--times" "--update" "--quiet" )
 declare    aborted=false
 declare -a in_progress_opts
+
+# Optionally support rsync to remote hosts over SSH
+if [[ -z "${DESTINATION_HOST}" ]]; then
+    if [[ ! -d ${DESTINATION_DIR} ]]; then
+        echo "${DESTINATION_DIR} does not exist or is not a directory, exiting." >&2
+        exit 1
+    fi
+
+    declare -a rsync_opts=( "--owner" "--group" "--perms" "--times" "--update" "--quiet" )
+    DESTINATION="${DESTINATION_DIR}"
+else
+    if [[ -z "${DESTINATION_USER}" ]]; then
+        echo "Missing DESTINATION_USER from config" >&2
+        exit 1
+    fi
+
+    if [[ ! -f "${SSH_KEY}" ]]; then
+        echo "Missing/invalid SSH_KEY from config" >&2
+        exit 1
+    fi
+
+    declare -a rsync_opts=( "--owner" "--group" "--perms" "--times" "--update" "--quiet" "--rsh" "ssh -i ${SSH_KEY} -o PasswordAuthentication=no" )
+    DESTINATION="${DESTINATION_USER}@${DESTINATION_HOST}:${DESTINATION_DIR}"
+fi
 
 # Catch common interrupt signals so current transfers can be completed before
 # the script exits
@@ -61,11 +92,6 @@ main() {
         exit 1
     fi
     local_log "Working directory: ${PWD}"
-
-    if [[ ! -d ${DESTINATION_DIR} ]]; then
-        local_log "${DESTINATION_DIR} does not exist or is not a directory, exiting."
-        exit 1
-    fi
 
     match_suffixes_opts=( '-regextype' 'posix-egrep' )
     if [[ -n "${MATCH_SUFFIXES:-}" ]]; then
@@ -174,7 +200,7 @@ remove_finished_jobs() {
 
 
 transfer() {
-# Move a file from under the current directory to ${DESTINATION_DIR},
+# Move a file from under the current directory to ${DESTINATION},
 # maintaining the directory structure.
     declare file="$1"
 
@@ -214,16 +240,16 @@ transfer() {
         --filter '+ */' \
         --filter "+ ${file#.}" \
         --filter '- *' \
-        ./ "${DESTINATION_DIR}" 2>&1)
+        ./ "${DESTINATION}" 2>&1)
     [[ -n ${rsync_output} ]] && local_log " - rsync: ${rsync_output}"
 
     # Alternative 1
-    #rsync "${rsync_opts[@]}" --recursive --filter '+ */' --filter '- *'  ./ "${DESTINATION_DIR}"
-    #rsync "${rsync_opts[@]}" --remove-source-files "${file}" "${DESTINATION_DIR}${file#.}"
+    #rsync "${rsync_opts[@]}" --recursive --filter '+ */' --filter '- *'  ./ "${DESTINATION}"
+    #rsync "${rsync_opts[@]}" --remove-source-files "${file}" "${DESTINATION}${file#.}"
 
     # Alternative 2
-    #rsync "${rsync_opts[@]}" --recursive --filter '+ */' --filter '- *'  ./ "${DESTINATION_DIR}"
-    #mv "${file}" "${DESTINATION_DIR}${file#.}"
+    #rsync "${rsync_opts[@]}" --recursive --filter '+ */' --filter '- *'  ./ "${DESTINATION}"
+    #mv "${file}" "${DESTINATION}${file#.}"
 
     local_log " - Transfer complete: ${file}"
 }
