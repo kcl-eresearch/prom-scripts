@@ -46,7 +46,6 @@ set -u
 
 # Global variables
 declare -A in_progress=()
-declare -a rsync_opts=( "--owner" "--group" "--perms" "--times" "--update" "--quiet" )
 declare    aborted=false
 declare -a in_progress_opts
 
