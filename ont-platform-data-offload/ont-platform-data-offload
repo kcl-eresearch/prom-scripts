@@ -15,7 +15,6 @@
 # Version  (dd-MMM-yy)  Author and Notes
 #     1.0  20-Jan-2021  bruce.ashford@nanoporetech.com
 #                       Initial version
-#                       Initial version
 #     2.0  04-Sep-2023  xand.meaden@kcl.ac.uk
 #                       Add support for rsync-over-ssh
 #
