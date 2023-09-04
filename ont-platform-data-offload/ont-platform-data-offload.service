@@ -1,0 +1,20 @@
+#
+# Copyright (c) 2021, Oxford Nanopore Technologies
+#
+
+[Unit]
+Description=Data Offload Service
+Requires=nfs-client.target
+After=nfs-client.target
+
+[Service]
+Type=simple
+ExecStart=/opt/ont/platform/sbin/ont-platform-data-offload
+User=1000
+Group=1000
+SyslogIdentifier=ont-platform-data-offload
+KillMode=none
+ExecStopPost=/usr/bin/pkill -f -u 1000 "^inotifywait|ont-platform-data-offload$"
+
+[Install]
+WantedBy=multi-user.target
