@@ -40,6 +40,7 @@ DATE_FORMAT="${DATE_FORMAT:-%b %d %T}" # short month, day, hour, minute, second 
 DESTINATION_HOST="${DESTINATION_HOST:-}"
 DESTINATION_USER="${DESTINATION_USER:-}"
 SSH_KEY="${SSH_KEY:-}"
+RSYNC_LOG_DIR="${RSYNC_LOG_DIR:-}"
 
 # Treat an unbound variable as an error
 set -u
@@ -230,6 +231,12 @@ transfer() {
     # Emulate transfers of larger files:
     #sleep "$(( ((RANDOM % 25) + 5 ) ))"
 
+    if [[ -d "${RSYNC_LOG_DIR}" ]]; then
+        rsync_log_file="${RSYNC_LOG_DIR}/rsync_$(date -u +%s.%N).${RANDOM}.log"
+    else
+        rsync_log_file="/dev/null"
+    fi
+
     # Rsync all directories and the file we want to transfer.
     # Maybe not an obvious way of doing this but only requires one fork.
     rsync_output=$(rsync "${rsync_opts[@]}" \
@@ -238,6 +245,8 @@ transfer() {
         --filter '+ */' \
         --filter "+ ${file#.}" \
         --filter '- *' \
+        --stats \
+        --log-file "${rsync_log_file}" \
         ./ "${DESTINATION}" 2>&1)
     [[ -n ${rsync_output} ]] && local_log " - rsync: ${rsync_output}"
 
