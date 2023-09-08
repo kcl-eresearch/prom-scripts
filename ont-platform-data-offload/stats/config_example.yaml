@@ -1,0 +1,11 @@
+---
+general:
+  site_name: kcl
+  node_name: prom1 # otherwise use shortname hostname
+
+influxdb:
+  host: influxdb.example.com
+  port: 8086
+  username: influxdb_username
+  password: influxdb_password
+  database: influxdb_database

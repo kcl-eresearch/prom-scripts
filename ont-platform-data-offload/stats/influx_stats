@@ -1,0 +1,55 @@
+#!/usr/bin/python3
+# Gather stats from rsync log files produced by ont-platform-data-offload, and send them to an Influx database
+# Xand Meaden, King's College London
+
+import argparse
+import datetime
+import influxdb
+import os
+import platform
+import re
+import sys
+import yaml
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--config_file", default="/etc/opdo_stats.yaml")
+args = parser.parse_args()
+
+try:
+    with open(args.config_file) as fh:
+        config = yaml.safe_load(fh)
+except Exception as e:
+    sys.exit(f"Failed loading config file {args.config_file}: {e}")
+
+if "node_name" not in config["general"]:
+    config["general"]["node_name"] = platform.node().split(".")[0]
+
+config["offload_service"] = {}
+
+try:
+    with open("/etc/systemd/ont-platform-data-offload.conf") as fh:
+        offload_service_config = fh.read().splitlines()
+except Exception as e:
+    sys.exit(f"Failed loading offload service config: {e}")
+
+for line in offload_service_config:
+    m = re.match(r"^([A-Z_]+)=(/.+)$", line)
+    if m:
+        config["offload_service"][m.group(1)] = m.group(2)
+
+if not (config["offload_service"]["RSYNC_LOG_DIR"] and os.path.isdir(config["offload_service"]["RSYNC_LOG_DIR"])):
+    sys.exit("Could not find rsync logs directory")
+
+print(config)
+
+for entry in os.scandir(config["offload_service"]["RSYNC_LOG_DIR"]):
+    m = re.match(r"^rsync_([0-9]+)\.([0-9]+)\.[0-9]+\.log$", entry.name)
+    if m:
+        timestamp = datetime.datetime.utcfromtimestamp(float(f"{m.group(1)}.{m.group(2)}"))
+
+        try:
+            with open(entry.path) as fh:
+                for line in fh:
+                    pass # NYI
+        except Exception as e:
+            sys.stderr.write(f"Failed reading rsync log file {entry.path}: {e}\n")
