@@ -1,7 +1,7 @@
 ---
 general:
   site_name: kcl
-  node_name: prom1 # otherwise use shortname hostname
+  node_name: prom1 # otherwise use short hostname
 
 influxdb:
   host: influxdb.example.com

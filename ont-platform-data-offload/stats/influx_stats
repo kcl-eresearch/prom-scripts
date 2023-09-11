@@ -33,23 +33,81 @@ except Exception as e:
     sys.exit(f"Failed loading offload service config: {e}")
 
 for line in offload_service_config:
-    m = re.match(r"^([A-Z_]+)=(/.+)$", line)
+    m = re.match(r"^([A-Z_]+)=(.+)$", line)
     if m:
         config["offload_service"][m.group(1)] = m.group(2)
 
 if not (config["offload_service"]["RSYNC_LOG_DIR"] and os.path.isdir(config["offload_service"]["RSYNC_LOG_DIR"])):
     sys.exit("Could not find rsync logs directory")
 
-print(config)
+processed = []
+payload = []
+
+influx_tags = {
+    "site": config["general"]["site_name"],
+    "node": config["general"]["node_name"],
+    "destination_dir": config["offload_service"]["DESTINATION_DIR"],
+    "source_dir": config["offload_service"]["SOURCE_DIR"],
+}
+
+if "DESTINATION_HOST" in config["offload_service"]:
+    influx_tags["destination_host"] = config["offload_service"]["DESTINATION_HOST"]
 
 for entry in os.scandir(config["offload_service"]["RSYNC_LOG_DIR"]):
+    matched = False
+
     m = re.match(r"^rsync_([0-9]+)\.([0-9]+)\.[0-9]+\.log$", entry.name)
     if m:
-        timestamp = datetime.datetime.utcfromtimestamp(float(f"{m.group(1)}.{m.group(2)}"))
+        timestamp = datetime.datetime.utcfromtimestamp(float(f"{m.group(1)}.{m.group(2)}")).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         try:
             with open(entry.path) as fh:
                 for line in fh:
-                    pass # NYI
+                    m = re.search(r"sent ([0-9,]+) bytes[\s]+received [0-9,]+ bytes[\s]+([0-9,.]+) bytes/sec$", line.strip())
+                    if m:
+                        matched = True
+                        bytes = int(m.group(1).replace(",", ""))
+                        speed = float(m.group(2).replace(",", ""))
+
         except Exception as e:
             sys.stderr.write(f"Failed reading rsync log file {entry.path}: {e}\n")
+
+        if matched:
+            processed.append(entry.path)
+            payload.extend([
+                {
+                    "measurement": "speed",
+                    "time": timestamp,
+                    "fields": {
+                        "bytes_per_second": speed,
+                    },
+                    "tags": influx_tags,
+                },
+                {
+                    "measurement": "bytes",
+                    "time": timestamp,
+                    "fields": {
+                        "bytes": bytes,
+                    },
+                    "tags": influx_tags,
+                }
+            ])
+
+if len(payload) == 0:
+    sys.exit(0)
+
+try:
+    client = influxdb.InfluxDBClient(
+        host=config["influxdb"]["host"],
+        port=config["influxdb"]["port"],
+        username=config["influxdb"]["username"],
+        password=config["influxdb"]["password"],
+        ssl=True,
+        verify_ssl=True
+    )
+    client.write_points(payload, database=config["influxdb"]["database"])
+except Exception as e:
+    sys.exit(f"Failed writing to InfluxDB: {e}")
+
+for file in processed:
+    os.unlink(file)
