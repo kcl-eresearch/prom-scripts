@@ -58,7 +58,9 @@ for entry in os.scandir(config["offload_service"]["RSYNC_LOG_DIR"]):
 
     m = re.match(r"^rsync_([0-9]+)\.([0-9]+)\.[0-9]+\.log$", entry.name)
     if m:
-        timestamp = datetime.datetime.utcfromtimestamp(float(f"{m.group(1)}.{m.group(2)}")).strftime("%Y-%m-%dT%H:%M:%SZ")
+        timestamp = datetime.datetime.utcfromtimestamp(float(f"{m.group(1)}.{m.group(2)}"))
+        timestamp_s = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
+        timestamp_h = timestamp.strftime("%Y-%m-%dT%H:00:00Z")
 
         try:
             with open(entry.path) as fh:
@@ -77,7 +79,7 @@ for entry in os.scandir(config["offload_service"]["RSYNC_LOG_DIR"]):
             payload.extend([
                 {
                     "measurement": "speed",
-                    "time": timestamp,
+                    "time": timestamp_s,
                     "fields": {
                         "bytes_per_second": speed,
                     },
@@ -85,7 +87,23 @@ for entry in os.scandir(config["offload_service"]["RSYNC_LOG_DIR"]):
                 },
                 {
                     "measurement": "bytes",
-                    "time": timestamp,
+                    "time": timestamp_s,
+                    "fields": {
+                        "bytes": bytes,
+                    },
+                    "tags": influx_tags,
+                },
+                {
+                    "measurement": "speed_hourly",
+                    "time": timestamp_h,
+                    "fields": {
+                        "bytes_per_second": speed,
+                    },
+                    "tags": influx_tags,
+                },
+                {
+                    "measurement": "bytes_hourly",
+                    "time": timestamp_h,
                     "fields": {
                         "bytes": bytes,
                     },
