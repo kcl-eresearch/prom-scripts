@@ -4,6 +4,7 @@
 
 import argparse
 import datetime
+import hashlib
 import influxdb
 import os
 import platform
@@ -75,6 +76,9 @@ for entry in os.scandir(config["offload_service"]["RSYNC_LOG_DIR"]):
             sys.stderr.write(f"Failed reading rsync log file {entry.path}: {e}\n")
 
         if matched:
+            influx_tags_hourly = dict(influx_tags)
+            influx_tags_hourly["uniquifier"] = hashlib.sha256(entry.path.encode()).hexdigest()
+
             processed.append(entry.path)
             payload.extend([
                 {
@@ -99,7 +103,7 @@ for entry in os.scandir(config["offload_service"]["RSYNC_LOG_DIR"]):
                     "fields": {
                         "bytes_per_second": speed,
                     },
-                    "tags": influx_tags,
+                    "tags": influx_tags_hourly,
                 },
                 {
                     "measurement": "bytes_hourly",
@@ -107,7 +111,7 @@ for entry in os.scandir(config["offload_service"]["RSYNC_LOG_DIR"]):
                     "fields": {
                         "bytes": bytes,
                     },
-                    "tags": influx_tags,
+                    "tags": influx_tags_hourly,
                 }
             ])
 
