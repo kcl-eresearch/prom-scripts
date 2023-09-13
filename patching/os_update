@@ -1,0 +1,26 @@
+#!/bin/bash
+# Install updates from /etc/apt/sources.list but not /etc/apt/sources.list.d
+
+check_sources() {
+    if [[ -d "/etc/apt/sources.list.d" ]]; then
+        echo "Directory /etc/apt/sources.list.d exists, not safe to proceed!" >&2
+        exit 1
+    fi
+}
+
+NOW="$(date +%Y-%m-%d-%H%M%S)"
+
+mv "/etc/apt/sources.list.d" "/etc/apt/sources.list.d_DISABLED_${NOW}"
+
+export DEBIAN_FRONTEND="noninteractive"
+
+check_sources
+apt-get -y update
+
+check_sources
+apt-get -y autoremove
+
+check_sources
+apt-get -y -o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" dist-upgrade
+
+mv "/etc/apt/sources.list.d_DISABLED_${NOW}" "/etc/apt/sources.list.d"
