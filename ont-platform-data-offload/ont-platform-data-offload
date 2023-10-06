@@ -17,8 +17,10 @@
 #                       Initial version
 #     2.0  04-Sep-2023  xand.meaden@kcl.ac.uk
 #                       Add support for rsync-over-ssh
-#     2.1  05-Oct 2023  xand.meaden@kcl.ac.uk
+#     2.1  05-Oct-2023  xand.meaden@kcl.ac.uk
 #                       Add option to store rsync logs
+#     2.2  06-Oct-2023  xand.meaden@kcl.ac.uk
+#                       Also copy .bam and .bam.bai files
 #
 
 # Read config file to override defaults below
@@ -35,7 +37,7 @@ fi
 # SOURCE_DIR and DESTINATION*: Have no sensible default setting. They either
 #    need to be specified in the CONF_FILE or provided as variables on the
 #    command line.
-MATCH_SUFFIXES="${MATCH_SUFFIXES:-fast5 pod5 fastq fastq.gz txt html pdf}"
+MATCH_SUFFIXES="${MATCH_SUFFIXES:-fast5 pod5 fastq fastq.gz txt html pdf bam bam.bai}"
 MAX_TRANSFERS="${MAX_TRANSFERS:-5}"
 LOG="${LOG-/data/data-offload.log}" # leave empty to log to stdout
 DATE_FORMAT="${DATE_FORMAT:-%b %d %T}" # short month, day, hour, minute, second - mimics journalctl format
