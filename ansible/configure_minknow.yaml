@@ -1,0 +1,19 @@
+---
+- name: Configure Minknow service
+  hosts: all
+  remote_user: prom
+  become: true
+
+  tasks:
+  - name: Deploy user_conf
+    ansible.builtin.template:
+      src: templates/minknow/user_conf.j2
+      dest: /opt/ont/minknow/conf/user_conf
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Restart minknow
+    ansible.builtin.systemd:
+      name: minknow
+      state: restarted

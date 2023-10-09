@@ -1,0 +1,38 @@
+---
+- name: Configure miscellaneous things
+  hosts: all
+  remote_user: prom
+  become: true
+
+  tasks:
+  - name: Deploy /etc/profile.d/bash_custom
+    ansible.builtin.copy:
+      src: files/misc/bash_custom
+      dest: /etc/profile.d/bash_custom
+      owner: root
+      group: root
+      mode: '0444'
+  
+  - name: Deploy /root/.bashrc
+    ansible.builtin.copy:
+      src: files/misc/bashrc_root
+      dest: /root/.bashrc
+      owner: root
+      group: root
+      mode: '0444'
+  
+  - name: Deploy /home/prom/.bashrc
+    ansible.builtin.copy:
+      src: files/misc/bashrc_prom
+      dest: /home/prom/.bashrc
+      owner: prom
+      group: prom
+      mode: '0444'
+  
+  - name: Deploy /etc/inputrc
+    ansible.builtin.copy:
+      src: files/misc/inputrc
+      dest: /etc/inputrc
+      owner: root
+      group: root
+      mode: '0444'

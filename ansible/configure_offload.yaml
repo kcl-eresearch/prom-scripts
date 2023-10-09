@@ -1,0 +1,5 @@
+---
+- name: Configure offload service
+  hosts: all
+  remote_user: prom
+  become: true
