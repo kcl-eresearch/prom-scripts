@@ -1,0 +1,61 @@
+{
+    "user": {
+        "cereal_class_version": 2,
+        "log": {
+            "cereal_class_version": 0,
+            "trace_categories": "",
+            "explain_listing_user_protocols": true,
+            "explain_listing_system_protocols": false
+        },
+        "tracing": {
+            "cereal_class_version": 0,
+            "enable": false,
+            "enabled_flow_cell_positions": "",
+            "trigger_filename": "trigger_event_trace"
+        },
+        "output_dirs": {
+            "cereal_class_version": 2,
+            "base": {
+                "value0": "/data"
+            },
+            "logs": {
+                "value0": "/var/log/minknow"
+            },
+            "protocol_persistence": {
+                "value0": "persistence"
+            },
+            "protocol_output_pattern": "{protocol_group_id}/{sample_id}/{{ our_uni }}/{{ ansible_host }}/{flow_cell_id}/{start_time}_{device_ID}_{flow_cell_id}_{short_protocol_run_id}",
+            "intermediate": {
+                "value0": "/data/intermediate"
+            },
+            "complete_intermediate_reads": {
+                "value0": "queued_reads"
+            },
+            "reads": {
+                "value0": "."
+            },
+            "reads_tmp": {
+                "value0": "reads/tmp"
+            },
+            "fallback_reads_path": {
+                "value0": "reads/fallback/"
+            },
+            "ping_queue": {
+                "value0": "pings"
+            }
+        },
+        "network_security": {
+            "cereal_class_version": 0,
+            "local_connection_only": "minknow_default",
+            "guest_rpc_enabled": "minknow_default"
+        },
+        "proxy": {
+            "cereal_class_version": 0,
+            "use_system_settings": true,
+            "auto_detect": true,
+            "auto_config_script": "",
+            "https_proxy": "",
+            "proxy_bypass": ""
+        }
+    }
+}
