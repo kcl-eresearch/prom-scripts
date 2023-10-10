@@ -1,0 +1,12 @@
+---
+- name: Run all the other configure_* playbooks
+  hosts: all
+  remote_user: sysadmin
+  become: true
+
+  tasks:
+    - import_playbook: configure_minknow.yaml
+    - import_playbook: configure_misc.yaml
+    - import_playbook: configure_offload.yaml
+    - import_playbook: configure_security.yaml
+    - import_playbook: configure_telegraf.yaml
