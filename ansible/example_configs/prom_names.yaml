@@ -1,0 +1,3 @@
+---
+ # Mapping of prom ID to friendly name, gets put in shell prompt etc
+PCA999999: prom0
