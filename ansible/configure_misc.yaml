@@ -16,7 +16,7 @@
       owner: root
       group: root
       mode: '0444'
-      content: "{{prom_names[ansible_hostname]}}"
+      content: "{{prom_names[ansible_hostname]}}\n"
 
   - name: Deploy /etc/profile.d/bash_custom
     ansible.builtin.copy:
