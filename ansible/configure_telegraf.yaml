@@ -14,7 +14,7 @@
       mode: '0444'
 
   - name: Install influxdata package signing key
-    ansible.builtin.shell: /usr/bin/gpg --dearmor -O /etc/apt/trusted.gpg.d/influxdata.gpg < /root/influxdata-archive_compat.key
+    ansible.builtin.shell: /usr/bin/gpg --dearmor -o /etc/apt/trusted.gpg.d/influxdata.gpg < /root/influxdata-archive_compat.key
 
   - name: Install influxdata repository
     ansible.builtin.apt_repository:
