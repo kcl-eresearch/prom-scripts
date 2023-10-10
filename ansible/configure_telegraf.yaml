@@ -1,7 +1,7 @@
 ---
 - name: Configure Telegraf
   hosts: all
-  remote_user: prom
+  remote_user: sysadmin
   become: true
 
   tasks:

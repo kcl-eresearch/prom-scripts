@@ -1,0 +1,38 @@
+---
+- name: Initial configuration, needed before others will work
+  hosts: all
+  remote_user: prom
+  become: true
+
+  tasks:
+  - name: Create sysadmin user
+    ansible.builtin.user:
+      name: sysadmin
+      comment: sysadmin
+      shell: /bin/bash
+      home: /home/sysadmin
+      create_home: true
+      password: "{{lookup('ansible.builtin.file', 'configs/sysadmin_user_password')}}"
+
+  - name: Set sysadmin home permissions
+    ansible.builtin.file:
+      path: /home/sysadmin
+      owner: sysadmin
+      group: sysadmin
+      mode: '0700'
+
+  - name: Deploy sysadmin ssh pubkey
+    ansible.posix.authorized_key:
+      user: sysadmin
+      state: present
+      exclusive: true
+      key: "{{lookup('ansible.builtin.file', 'files/security/sysadmin_pub_key')}}"
+
+  - name: Configure sysadmin sudo
+    community.general.sudoers:
+      name: sysadmin_root
+      state: present
+      user: sysadmin
+      commands: ALL
+      nopassword: true
+

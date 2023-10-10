@@ -1,5 +1,0 @@
----
-- name: Configure sshd and related things
-  hosts: all
-  remote_user: prom
-  become: true

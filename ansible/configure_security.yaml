@@ -1,5 +1,5 @@
 ---
-- name: Configure offload service
+- name: Configure security related things
   hosts: all
   remote_user: sysadmin
   become: true
