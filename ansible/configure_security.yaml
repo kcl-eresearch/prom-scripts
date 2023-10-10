@@ -3,3 +3,19 @@
   hosts: all
   remote_user: sysadmin
   become: true
+
+  tasks:
+  - name: Disable root password
+    ansible.builtin.user:
+      name: root
+      password: "!"
+
+  - name: Delete root authorized_keys
+    ansible.builtin.file:
+      path: /root/.ssh/authorized_keys
+      state: absent
+
+  - name: Set prom password
+    ansible.builtin.user:
+      name: prom
+      password: "{{lookup('ansible.builtin.file', 'configs/prom_user_password')}}"
