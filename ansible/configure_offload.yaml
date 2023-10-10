@@ -3,3 +3,32 @@
   hosts: all
   remote_user: sysadmin
   become: true
+
+  tasks:
+  - name: Deploy ont-platform-data-offload
+    ansible.builtin.copy:
+      src: ../ont-platform-data-offload/ont-platform-data-offload
+      dest: /opt/ont/platform/sbin/ont-platform-data-offload
+      owner: root
+      group: root
+      mode: '0755'
+
+  - name: Deploy ont-platform-data-offload.service
+    ansible.builtin.copy:
+      src: ../ont-platform-data-offload/ont-platform-data-offload.service
+      dest: /lib/systemd/system/ont-platform-data-offload.service
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Systemd daemon-reload
+    ansible.builtin.systemd:
+      daemon_reload: true
+
+  - name: Deploy ont-platform-data-offload.conf
+    ansible.builtin.copy:
+      src: files/offload/ont-platform-data-offload.conf
+      dest: /etc/systemd/ont-platform-data-offload.conf
+      owner: root
+      group: prom
+      mode: '0440'
