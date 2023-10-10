@@ -7,7 +7,7 @@
   tasks:
   - name: Read prom_names
     ansible.builtin.include_vars:
-      file: config/prom_names.yaml
+      file: configs/prom_names.yaml
       name: prom_names
 
   - name: Deploy /etc/prom_id
