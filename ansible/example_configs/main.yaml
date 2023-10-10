@@ -1,0 +1,6 @@
+---
+proms: # Mapping of prom ID to name/IP
+  0:
+    name: PCA999999
+    fqdn: foo.bar.example.com
+    addr: 10.11.12.13
