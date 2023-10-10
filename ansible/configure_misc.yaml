@@ -5,6 +5,19 @@
   become: true
 
   tasks:
+  - name: Read prom_names
+    ansible.builtin.include_vars:
+      file: config/prom_names.yaml
+      name: prom_names
+
+  - name: Deploy /etc/prom_id
+    ansible.builtin.copy:
+      dest: /etc/prom_id
+      owner: root
+      group: root
+      mode: '0444'
+      content: "{{prom_names[ansible_hostname]}}"
+
   - name: Deploy /etc/profile.d/bash_custom
     ansible.builtin.copy:
       src: files/misc/bash_custom
