@@ -30,7 +30,7 @@ Configures the offload service to support rsync-over-SSH and its destination, in
 
 ## configure_security
 
-Sets a known password for the `prom` user, disables root login access.
+Sets a known password for the `prom` user, disables root login access. Only allows `sysadmin` user to SSH in.
 
 ## conifugre_telegraf
 
