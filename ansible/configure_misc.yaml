@@ -42,6 +42,14 @@
       group: prom
       mode: '0444'
   
+  - name: Deploy /home/sysadmin/.bashrc
+    ansible.builtin.copy:
+      src: files/misc/bashrc_sysadmin
+      dest: /home/sysadmin/.bashrc
+      owner: sysadmin
+      group: sysadmin
+      mode: '0444'
+
   - name: Deploy /etc/inputrc
     ansible.builtin.copy:
       src: files/misc/inputrc
