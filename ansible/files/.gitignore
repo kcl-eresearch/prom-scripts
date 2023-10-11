@@ -1,5 +1,4 @@
 offload/id_rsa
 offload/ont-platform-data-offload.conf
-security/root_pub_key
-security/sshd_config
+security/sysadmin_pub_key
 telegraf/telegraf.conf
