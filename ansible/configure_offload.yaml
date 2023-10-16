@@ -32,3 +32,11 @@
       owner: root
       group: prom
       mode: '0440'
+
+  - name: Create rsync_logs directory
+    ansible.builtin.file:
+      path: /data/rsync_logs
+      state: directory
+      owner: prom
+      group: prom
+      modee: '0750'
