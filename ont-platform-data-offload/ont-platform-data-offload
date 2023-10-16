@@ -37,7 +37,7 @@ fi
 # SOURCE_DIR and DESTINATION*: Have no sensible default setting. They either
 #    need to be specified in the CONF_FILE or provided as variables on the
 #    command line.
-MATCH_SUFFIXES="${MATCH_SUFFIXES:-fast5 pod5 fastq fastq.gz txt html pdf bam bam.bai}"
+MATCH_SUFFIXES="${MATCH_SUFFIXES:-fast5 pod5 fastq fastq.gz txt html pdf bam bam.bai csv}"
 MAX_TRANSFERS="${MAX_TRANSFERS:-5}"
 LOG="${LOG-/data/data-offload.log}" # leave empty to log to stdout
 DATE_FORMAT="${DATE_FORMAT:-%b %d %T}" # short month, day, hour, minute, second - mimics journalctl format
