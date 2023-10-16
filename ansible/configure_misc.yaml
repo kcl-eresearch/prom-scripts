@@ -34,6 +34,14 @@
       group: root
       mode: '0444'
   
+  - name: Deploy /root/.profile
+    ansible.builtin.copy:
+      src: files/misc/profile_root
+      dest: /root/.profile
+      owner: root
+      group: root
+      mode: '0444'
+
   - name: Deploy /home/prom/.bashrc
     ansible.builtin.copy:
       src: files/misc/bashrc_prom
