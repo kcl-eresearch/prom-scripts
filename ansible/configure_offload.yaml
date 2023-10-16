@@ -39,4 +39,4 @@
       state: directory
       owner: prom
       group: prom
-      modee: '0750'
+      mode: '0750'
