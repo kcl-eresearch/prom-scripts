@@ -40,3 +40,19 @@
       owner: prom
       group: prom
       mode: '0750'
+
+  - name: Create /data/.ssh_keys
+    ansible.builtin.file:
+      path: /data/.ssh_keys
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0500'
+
+  - name: Deploy offload SSH key
+    ansible.builtin.copy:
+      src: files/offload/id_rsa
+      dest: /data/.ssh_keys/id_rsa
+      owner: prom
+      group: prom
+      mode: '0400'
