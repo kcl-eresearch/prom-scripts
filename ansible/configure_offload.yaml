@@ -45,6 +45,21 @@
     ansible.builtin.file:
       path: /data/.ssh_keys
       state: directory
+      owner: root
+      group: root
+      mode: '0500'
+
+  - name: Mount /data/.ssh_keys tmpfs
+    ansible.posix.mount:
+      path: /data/.ssh_keys
+      state: mounted
+      src: tmpfs
+      fstype: tmpfs
+      opts: size=1024k
+
+  - name: Set /data/.ssh_keys permissions
+    ansible.builtin.file:
+      path: /data/.ssh_keys
       owner: prom
       group: prom
       mode: '0500'
