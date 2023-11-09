@@ -1,0 +1,5 @@
+// Managed file, do not edit
+Acquire {
+	HTTP::Proxy "http://squid.example.com:3128/";
+	HTTPS::Proxy "http://squid.example.com:3128/";
+};

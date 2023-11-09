@@ -66,6 +66,14 @@
       group: root
       mode: '0444'
 
+  - name: Deploy /etc/apt/apt.conf.d/00proxy
+    ansible.builtin.copy:
+      src: files/misc/00proxy
+      dest: /etc/apt/apt.conf.d/00proxy
+      owner: root
+      group: root
+      mode: '0444'
+
   - name: Install htop
     ansible.builtin.apt:
       name: htop
