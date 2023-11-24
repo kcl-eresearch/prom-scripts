@@ -71,3 +71,11 @@
       owner: prom
       group: prom
       mode: '0400'
+
+  - name: Deploy SSH config
+    ansible.builtin.copy:
+      src: files/offload/ssh.config
+      dest: /home/prom/.ssh/config
+      owner: prom
+      group: prom
+      mode: '0400'
