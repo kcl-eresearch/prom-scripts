@@ -1,0 +1,80 @@
+---
+- name: Configure miscellaneous things
+  hosts: all
+  remote_user: sysadmin
+  become: true
+
+  tasks:
+  - name: Read prom_names
+    ansible.builtin.include_vars:
+      file: configs/prom_names.yaml
+      name: prom_names
+
+  - name: Deploy /etc/prom_id
+    ansible.builtin.copy:
+      dest: /etc/prom_id
+      owner: root
+      group: root
+      mode: '0444'
+      content: "{{prom_names[ansible_hostname]}}\n"
+
+  - name: Deploy /etc/profile.d/bash_custom
+    ansible.builtin.copy:
+      src: files/misc/bash_custom
+      dest: /etc/profile.d/bash_custom
+      owner: root
+      group: root
+      mode: '0444'
+  
+  - name: Deploy /root/.bashrc
+    ansible.builtin.copy:
+      src: files/misc/bashrc_root
+      dest: /root/.bashrc
+      owner: root
+      group: root
+      mode: '0444'
+  
+  - name: Deploy /root/.profile
+    ansible.builtin.copy:
+      src: files/misc/profile_root
+      dest: /root/.profile
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Deploy /home/prom/.bashrc
+    ansible.builtin.copy:
+      src: files/misc/bashrc_prom
+      dest: /home/prom/.bashrc
+      owner: prom
+      group: prom
+      mode: '0444'
+  
+  - name: Deploy /home/sysadmin/.bashrc
+    ansible.builtin.copy:
+      src: files/misc/bashrc_sysadmin
+      dest: /home/sysadmin/.bashrc
+      owner: sysadmin
+      group: sysadmin
+      mode: '0444'
+
+  - name: Deploy /etc/inputrc
+    ansible.builtin.copy:
+      src: files/misc/inputrc
+      dest: /etc/inputrc
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Deploy /etc/apt/apt.conf.d/00proxy
+    ansible.builtin.copy:
+      src: files/misc/00proxy
+      dest: /etc/apt/apt.conf.d/00proxy
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Install htop
+    ansible.builtin.apt:
+      name: htop
+      state: present

@@ -1,0 +1,17 @@
+######################################
+# Managed file, do not edit manually #
+######################################
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=1000
+HISTFILESIZE=2000
+HISTTIMEFORMAT="%Y-%m-%d %H:%M:%S "
+
+alias ip="ip --color=auto"
+
+if [ -e "/etc/prom_id" ]
+then
+    PROM_ID="$(cat /etc/prom_id)"
+else
+    PROM_ID=""
+fi

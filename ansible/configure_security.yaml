@@ -1,0 +1,37 @@
+---
+- name: Configure security related things
+  hosts: all
+  remote_user: sysadmin
+  become: true
+
+  tasks:
+  - name: Disable root password
+    ansible.builtin.user:
+      name: root
+      password: "!"
+
+  - name: Delete root authorized_keys
+    ansible.builtin.file:
+      path: /root/.ssh/authorized_keys
+      state: absent
+
+  - name: Set prom password
+    ansible.builtin.user:
+      name: prom
+      password: "{{lookup('ansible.builtin.file', 'configs/prom_user_password')}}"
+
+  - name: Configure sshd; only allow sysadmin login
+    ansible.builtin.copy:
+      src: files/security/sshd_config
+      dest: /etc/ssh/sshd_config
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Validate sshd_config
+    ansible.builtin.command: /usr/sbin/sshd -t
+
+  - name: Restart sshd
+    ansible.builtin.systemd:
+      name: sshd
+      state: restarted

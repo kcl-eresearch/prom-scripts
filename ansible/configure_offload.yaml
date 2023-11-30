@@ -1,0 +1,81 @@
+---
+- name: Configure offload service
+  hosts: all
+  remote_user: sysadmin
+  become: true
+
+  tasks:
+  - name: Deploy ont-platform-data-offload
+    ansible.builtin.copy:
+      src: ../ont-platform-data-offload/ont-platform-data-offload
+      dest: /opt/ont/platform/sbin/ont-platform-data-offload
+      owner: root
+      group: root
+      mode: '0755'
+
+  - name: Deploy ont-platform-data-offload.service
+    ansible.builtin.copy:
+      src: ../ont-platform-data-offload/ont-platform-data-offload.service
+      dest: /lib/systemd/system/ont-platform-data-offload.service
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Systemd daemon-reload
+    ansible.builtin.systemd:
+      daemon_reload: true
+
+  - name: Deploy ont-platform-data-offload.conf
+    ansible.builtin.copy:
+      src: files/offload/ont-platform-data-offload.conf
+      dest: /etc/systemd/ont-platform-data-offload.conf
+      owner: root
+      group: prom
+      mode: '0440'
+
+  - name: Create rsync_logs directory
+    ansible.builtin.file:
+      path: /data/rsync_logs
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0750'
+
+  - name: Create /data/.ssh_keys
+    ansible.builtin.file:
+      path: /data/.ssh_keys
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0500'
+
+  - name: Mount /data/.ssh_keys tmpfs
+    ansible.posix.mount:
+      path: /data/.ssh_keys
+      state: mounted
+      src: tmpfs
+      fstype: tmpfs
+      opts: size=1024k
+
+  - name: Set /data/.ssh_keys permissions
+    ansible.builtin.file:
+      path: /data/.ssh_keys
+      owner: prom
+      group: prom
+      mode: '0500'
+
+  - name: Deploy offload SSH key
+    ansible.builtin.copy:
+      src: files/offload/id_rsa
+      dest: /data/.ssh_keys/id_rsa
+      owner: prom
+      group: prom
+      mode: '0400'
+
+  - name: Deploy SSH config
+    ansible.builtin.copy:
+      src: files/offload/ssh.config
+      dest: /home/prom/.ssh/config
+      owner: prom
+      group: prom
+      mode: '0400'
