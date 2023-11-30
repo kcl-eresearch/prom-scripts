@@ -78,3 +78,19 @@
     ansible.builtin.apt:
       name: htop
       state: present
+
+  - name: Create /etc/firefox/policies
+    ansible.builtin.file:
+      path: /etc/firefox/policies
+      state: directory
+      owner: root
+      group: root
+      mode: '0555'
+
+  - name: Deploy /etc/firefox/policies/policies.json
+    ansible.builtin.copy:
+      src: files/misc/firefox_policies.json
+      dest: /etc/firefox/policies/policies.json
+      owner: root
+      group: root
+      mode: '0444'

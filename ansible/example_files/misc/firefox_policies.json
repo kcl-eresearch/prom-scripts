@@ -1,0 +1,11 @@
+{
+    "policies": {
+      "Proxy": {
+        "Mode": "manual",
+        "Locked": true,
+        "HTTPProxy": "squid.example.com:3128",
+        "UseHTTPProxyForAllProtocols": true
+      }
+    }
+  }
+  
