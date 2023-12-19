@@ -41,6 +41,14 @@
       group: prom
       mode: '0750'
 
+  - name: Create seq_reports directory
+    ansible.builtin.file:
+      path: /data/seq_reports
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0755'
+
   - name: Create /data/.ssh_keys
     ansible.builtin.file:
       path: /data/.ssh_keys
