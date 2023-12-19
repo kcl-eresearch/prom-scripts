@@ -37,7 +37,9 @@ fi
 # SOURCE_DIR and DESTINATION*: Have no sensible default setting. They either
 #    need to be specified in the CONF_FILE or provided as variables on the
 #    command line.
-MATCH_SUFFIXES="${MATCH_SUFFIXES:-fast5 pod5 fastq fastq.gz txt html pdf bam bam.bai csv}"
+MATCH_SUFFIXES="${MATCH_SUFFIXES:-fast5 pod5 fastq fastq.gz txt html pdf bam bam.bai csv json tsv md}"
+LOCAL_COPY_SUFFIXES="${LOCAL_COPY_SUFFIXES:-html json}"
+LOCAL_COPY_DIR="/data/seq_reports"
 MAX_TRANSFERS="${MAX_TRANSFERS:-5}"
 LOG="${LOG-/data/data-offload.log}" # leave empty to log to stdout
 DATE_FORMAT="${DATE_FORMAT:-%b %d %T}" # short month, day, hour, minute, second - mimics journalctl format
@@ -122,6 +124,12 @@ main() {
 		if ! new_file=$(find . -type f  "${match_suffixes_opts[@]}" "${in_progress_opts[@]}" -print -quit); then
 		    continue # find failed or was interrupted
         elif [[ -n ${new_file} ]]; then
+            for suffix in ${LOCAL_COPY_SUFFIXES}; do
+                if [[ $new_file =~ $suffix ]]; then
+                    local_log "Making local copy for $new_file"
+                    cp "$new_file" $LOCAL_COPY_DIR/
+                fi
+            done
             transfer "${new_file}" &
             new_pid=$!
             in_progress[${new_pid}]="${new_file}"
