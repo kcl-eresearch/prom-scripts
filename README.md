@@ -9,4 +9,6 @@ devices.
 
 `prom-luks-data` will destroy the existing filesystem mounted on
 /data and replace it with a encrypted LUKS volume. The password
-set will then need to be provided on each reboot.
+set will then need to be provided on each reboot. WARNING: this
+configuration has been found to be unsuitable at higher sample
+throughput (> 16 samples).
