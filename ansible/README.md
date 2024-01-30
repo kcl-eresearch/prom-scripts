@@ -26,7 +26,11 @@ Configures some things such as bash prompt and enhancements, use or customise ac
 
 ## configure_offload
 
-Configures the offload service to support rsync-over-SSH and its destination, include private key for this (see warning above).
+Configures the offload service to support rsync-over-SSH and its destination.
+
+## configure_offload_key
+
+Mounts a `tmpfs` filesytem and copies the private SSH key to it.
 
 ## configure_security
 

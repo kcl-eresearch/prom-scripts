@@ -49,37 +49,6 @@
       group: prom
       mode: '0755'
 
-  - name: Create /data/.ssh_keys
-    ansible.builtin.file:
-      path: /data/.ssh_keys
-      state: directory
-      owner: prom
-      group: prom
-      mode: '0500'
-
-  - name: Mount /data/.ssh_keys tmpfs
-    ansible.posix.mount:
-      path: /data/.ssh_keys
-      state: mounted
-      src: tmpfs
-      fstype: tmpfs
-      opts: size=1024k
-
-  - name: Set /data/.ssh_keys permissions
-    ansible.builtin.file:
-      path: /data/.ssh_keys
-      owner: prom
-      group: prom
-      mode: '0500'
-
-  - name: Deploy offload SSH key
-    ansible.builtin.copy:
-      src: files/offload/id_rsa
-      dest: /data/.ssh_keys/id_rsa
-      owner: prom
-      group: prom
-      mode: '0400'
-
   - name: Deploy SSH config
     ansible.builtin.copy:
       src: files/offload/ssh.config
