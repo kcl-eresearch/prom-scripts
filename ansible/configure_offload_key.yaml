@@ -35,3 +35,14 @@
       owner: prom
       group: prom
       mode: '0400'
+
+  - name: Deploy offload restart script
+    ansible.builtin.copy:
+      src: files/offload/ssh_key_offload_restart.sh
+      dest: /usr/libexec/ssh_key_offload_restart
+      owner: root
+      group: root
+      mode: '0500'
+
+  - name: Run offload restart script
+    ansible.builtin.command: /usr/libexec/ssh_key_offload_restart
