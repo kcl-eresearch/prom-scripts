@@ -56,3 +56,11 @@
       owner: prom
       group: prom
       mode: '0400'
+
+  - name: Configure reports emailer
+    ansible.builtin.copy:
+      src: files/offload/mail_reports.yaml
+      dest: /etc/ont_mail_reports.yaml
+      owner: root
+      group: prom
+      mode: '0440'
