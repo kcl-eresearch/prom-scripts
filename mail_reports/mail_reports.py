@@ -79,7 +79,7 @@ segment_count = len(segments)
 for i in range(segment_count):
     message = MIMEMultipart()
     message["From"] = config["mail_from"]
-    message["To"] = ", ".join(config["mail_to"]),
+    message["To"] = ", ".join(config["mail_to"])
     message["Subject"] = "Sequencing reports from %s (%s) at %s [%d of %d]" % (prom_id, hostname, timestamp, i + 1, segment_count)
     body = "Attached are %d reports from %s (%s). This is email number %d of %d sent at %s.\n" % (len(segments[i]), prom_id, hostname, i + 1, segment_count, timestamp)
     body += "\n- ".join(segments[i].keys())
