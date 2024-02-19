@@ -59,7 +59,7 @@
 
   - name: Configure reports emailer
     ansible.builtin.copy:
-      src: files/offload/mail_reports.yaml
+      src: files/offload/ont_mail_reports.yaml
       dest: /etc/ont_mail_reports.yaml
       owner: root
       group: prom
