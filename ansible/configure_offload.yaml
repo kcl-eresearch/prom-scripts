@@ -59,7 +59,7 @@
 
   - name: Deploy reports emailer
     ansible.builtin.copy:
-      src: files/offload/ont_mail_reports.py
+      src: ../ont_mail_reports/ont_mail_reports.py
       dest: /usr/local/bin/ont_mail_reports
       owner: root
       group: prom
