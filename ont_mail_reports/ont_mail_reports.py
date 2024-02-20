@@ -98,7 +98,8 @@ for i in range(segment_count):
 
     try:
         smtp = smtplib.SMTP(config["mail_host"], config["mail_port"])
-        smtp.starttls(context=ssl.create_default_context())
+        if "mail_tls" in config and config["mail_tls"]:
+            smtp.starttls(context=ssl.create_default_context())
         if "mail_user" in config:
             smtp.login(config["mail_user"], config["mail_password"])
         smtp.sendmail(config["mail_from"], config["mail_to"], message_text)
