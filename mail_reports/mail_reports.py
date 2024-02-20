@@ -43,6 +43,12 @@ for item in os.scandir(config["reports_dir"]):
 if len(to_mail) == 0:
     sys.exit(0)
 
+header_from = "<%s>" % config["mail_from"]
+header_to = ""
+for address in config["mail_to"]:
+    header_to += "<%s>, " % address
+header_to = header_to.rstrip(", ")
+
 segments = [{}]
 mailed = []
 
@@ -78,25 +84,33 @@ for item in to_mail:
 segment_count = len(segments)
 for i in range(segment_count):
     message = MIMEMultipart()
-    message["From"] = config["mail_from"]
-    message["To"] = ", ".join(config["mail_to"])
+    message["From"] = header_from
+    message["To"] = header_to
     message["Subject"] = "Sequencing reports from %s (%s) at %s [%d of %d]" % (prom_id, hostname, timestamp, i + 1, segment_count)
     body = "Attached are %d reports from %s (%s). This is email number %d of %d sent at %s.\n" % (len(segments[i]), prom_id, hostname, i + 1, segment_count, timestamp)
-    body += "\n- ".join(segments[i].keys())
+    body += "\n- ".join([""] + list(segments[i].keys()))
     message.attach(MIMEText(body, "plain"))
 
     for filename, part in segments[i].items():
         message.attach(part)
 
-    text = message.as_string()
+    message_text = message.as_string()
 
-    print(text)
-    print("================================================")
+    try:
+        smtp = smtplib.SMTP(config["mail_host"], config["mail_port"])
+        smtp.starttls(context=ssl.create_default_context())
+        if "mail_user" in config:
+            smtp.login(config["mail_user"], config["mail_password"])
+        smtp.sendmail(config["mail_from"], config["mail_to"], message_text)
+        smtp.quit()
+    except Exception as e:
+        sys.stderr.write("Failed sending message %d: %s\n" % (i + 1, e))
+        continue
 
+    mailed.extend(list(segments[i].keys()))
 
-sys.exit(0)
 for item in mailed:
-    mailed_file = "%s.mailed.yaml" % item
+    mailed_file = "%s/%s.mailed.yaml" % (config["reports_dir"], item)
     try:
         with open(mailed_file, "w") as fh:
             yaml.dump(
