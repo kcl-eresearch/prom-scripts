@@ -57,6 +57,14 @@
       group: prom
       mode: '0400'
 
+  - name: Deploy reports emailer
+    ansible.builtin.copy:
+      src: files/offload/ont_mail_reports.py
+      dest: /usr/local/bin/ont_mail_reports
+      owner: root
+      group: prom
+      mode: '0550'
+
   - name: Configure reports emailer
     ansible.builtin.copy:
       src: files/offload/ont_mail_reports.yaml
@@ -64,3 +72,11 @@
       owner: root
       group: prom
       mode: '0440'
+
+  - name: Create reports emailer cron job
+    ansible.builtin.cron:
+      name: ont_mail_reports
+      user: prom
+      minute: "0"
+      hour: "*/3"
+      job: /usr/local/bin/ont_mail_reports
