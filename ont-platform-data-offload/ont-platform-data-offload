@@ -38,7 +38,7 @@ fi
 #    need to be specified in the CONF_FILE or provided as variables on the
 #    command line.
 MATCH_SUFFIXES="${MATCH_SUFFIXES:-fast5 pod5 fastq fastq.gz txt html pdf bam bam.bai csv json tsv md}"
-LOCAL_COPY_SUFFIXES="${LOCAL_COPY_SUFFIXES:-html json}"
+LOCAL_COPY_SUFFIXES="${LOCAL_COPY_SUFFIXES:-html json txt}"
 LOCAL_COPY_DIR="/data/seq_reports"
 MAX_TRANSFERS="${MAX_TRANSFERS:-5}"
 LOG="${LOG-/data/data-offload.log}" # leave empty to log to stdout
