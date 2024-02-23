@@ -1,0 +1,10 @@
+---
+# Configuration for ont_rsync_reports.py
+ssh_private_key: /path/to/id_rsa
+source_dir: /data/seq_reports
+destination_host: rds.example.com
+destination_user: svc_account
+destination_dirs:
+  "^report_[^\s]+\.html$": /path/to/seq_reports
+  "^report_[^\s]+\.json$": /path/to/seq_reports
+  "^sequencing_summary_[^\s]+\.txt$": /path/to/seq_summary

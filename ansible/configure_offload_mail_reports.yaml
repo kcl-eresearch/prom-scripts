@@ -1,0 +1,30 @@
+---
+- name: Configure offload reports mailer
+  hosts: all
+  remote_user: sysadmin
+  become: true
+
+  tasks:
+- name: Deploy reports emailer
+    ansible.builtin.copy:
+      src: ../ont_reports/ont_mail_reports.py
+      dest: /usr/local/bin/ont_mail_reports
+      owner: root
+      group: prom
+      mode: '0550'
+
+  - name: Configure reports emailer
+    ansible.builtin.copy:
+      src: files/offload/ont_mail_reports.yaml
+      dest: /etc/ont_mail_reports.yaml
+      owner: root
+      group: prom
+      mode: '0440'
+
+  - name: Create reports emailer cron job
+    ansible.builtin.cron:
+      name: ont_mail_reports
+      user: prom
+      minute: "{{ 60 | random(seed=inventory_hostname) }}"
+      hour: "*"
+      job: /usr/local/bin/ont_mail_reports

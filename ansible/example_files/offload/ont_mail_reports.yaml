@@ -1,5 +1,5 @@
 ---
-# Configuration for mail_reports.py
+# Configuration for ont_mail_reports.py
 mail_host: smtp.example.com
 mail_port: 587
 mail_user: ont-reports@example.com
