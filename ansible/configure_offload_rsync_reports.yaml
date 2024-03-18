@@ -35,8 +35,8 @@
       job: /usr/local/bin/ont_rsync_reports
 
   - name: Deploy SSH known host
-    ansible.builtin.known_hosts:
-      name: rsync_reports
-      state: present
+    ansible.builtin.blockinfile:
       path: /etc/ssh/ssh_known_hosts
-      key: "{{ lookup('ansible.builtin.file', 'files/offload/host_keys/rsync_reports') }}"
+      create: true
+      marker: "# {mark} ANSIBLE MANAGED HOST KEY rsync_reports"
+      block: "{{ lookup('ansible.builtin.file', 'files/offload/host_keys/rsync_reports') }}"
