@@ -57,6 +57,13 @@
       group: prom
       mode: '0400'
 
+  - name: Deploy SSH known host
+    ansible.builtin.known_hosts:
+      name: ont_offload
+      state: present
+      path: /etc/ssh/ssh_known_hosts
+      key: "{{ lookup('ansible.builtin.file', 'files/offload/host_keys/ont_offload') }}"
+
   - name: Deploy reports emailer
     ansible.builtin.copy:
       src: ../ont_mail_reports/ont_mail_reports.py
