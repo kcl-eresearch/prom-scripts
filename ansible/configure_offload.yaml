@@ -49,6 +49,14 @@
       group: prom
       mode: '0755'
 
+  - name: Create lims_reports directory
+    ansible.builtin.file:
+      path: /data/lims_reports
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0755'
+
   - name: Deploy SSH config
     ansible.builtin.copy:
       src: files/offload/ssh.config
