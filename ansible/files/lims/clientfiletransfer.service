@@ -1,0 +1,14 @@
+[Unit]
+Description=clientfiletransfer service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=prom
+ExecStart=/opt/ClientFileTransfer/ClientFileTransfer
+
+[Install]
+WantedBy=multi-user.target
