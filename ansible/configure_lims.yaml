@@ -38,6 +38,30 @@
     ansible.builtin.systemd:
       daemon_reload: true
 
+  - name: Create lims_reports directory
+    ansible.builtin.file:
+      path: /data/lims_reports
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0755'
+
+  - name: Create lims_reports_success directory
+    ansible.builtin.file:
+      path: /data/lims_reports_success
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0755'
+
+  - name: Create lims_reports_failure directory
+    ansible.builtin.file:
+      path: /data/lims_reports_failure
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0755'
+
   - name: Enable clientfiletransfer.service
     ansible.builtin.systemd:
       name: clientfiletransfer
