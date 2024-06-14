@@ -1,0 +1,45 @@
+---
+- name: Configure LIMS transfer service
+  hosts: all
+  remote_user: sysadmin
+  become: true
+
+  tasks:
+  - name: Deploy ClientFileTransfer archive
+    ansible.builtin.unarchive:
+      src: files/lims/ClientFileTransfer.tar.gz
+      dest: /opt
+
+  - name: Deploy ClientFileTransfer script with java config
+    ansible.builtin.copy:
+      src: files/lims/ClientFileTransfer
+      dest: /opt/ClientFileTransfer/ClientFileTransfer
+      owner: root
+      group: prom
+      mode: '0550'
+
+  - name: Deploy client_file_transfer.properties
+    ansible.builtin.copy:
+      src: files/lims/client_file_transfer.properties
+      dest: /opt/ClientFileTransfer/conf/client_file_transfer.properties
+      owner: root
+      group: prom
+      mode: '0440'
+
+  - name: Deploy clientfiletransfer.service
+    ansible.builtin.copy:
+      src: files/lims/clientfiletransfer.service
+      dest: /etc/systemd/system/clientfiletransfer.service
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Systemd daemon-reload
+    ansible.builtin.systemd:
+      daemon_reload: true
+
+  - name: Enable clientfiletransfer.service
+    ansible.builtin.systemd:
+      name: clientfiletransfer
+      state: started
+      enabled: true
