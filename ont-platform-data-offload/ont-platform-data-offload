@@ -40,6 +40,8 @@ fi
 MATCH_SUFFIXES="${MATCH_SUFFIXES:-fast5 pod5 fastq fastq.gz txt html pdf bam bam.bai csv json tsv md}"
 LOCAL_COPY_SUFFIXES="${LOCAL_COPY_SUFFIXES:-html json txt}"
 LOCAL_COPY_DIR="/data/seq_reports"
+LIMS_COPY_SUFFIXES="${LIMS_COPY_SUFFIXES:-json}"
+LIMS_COPY_DIR="/data/lims_reports"
 MAX_TRANSFERS="${MAX_TRANSFERS:-5}"
 LOG="${LOG-/data/data-offload.log}" # leave empty to log to stdout
 DATE_FORMAT="${DATE_FORMAT:-%b %d %T}" # short month, day, hour, minute, second - mimics journalctl format
@@ -128,6 +130,12 @@ main() {
                 if [[ $new_file =~ $suffix ]]; then
                     local_log "Making local copy for $new_file"
                     cp "$new_file" $LOCAL_COPY_DIR/
+                fi
+            done
+            for suffix in ${LIMS_COPY_SUFFIXES}; do
+                if [[ $new_file =~ $suffix ]]; then
+                    local_log "Making LIMS copy for $new_file"
+                    cp "$new_file" $LIMS_COPY_DIR/
                 fi
             done
             transfer "${new_file}" &
