@@ -60,7 +60,7 @@
     ansible.builtin.file:
       path: /opt/ClientFileTransfer/success
       state: link
-      dest: /data/lims_reports_success
+      src: /data/lims_reports_success
 
   #
   - name: Create lims_reports_failure directory
@@ -75,7 +75,7 @@
     ansible.builtin.file:
       path: /opt/ClientFileTransfer/failure
       state: link
-      dest: /data/lims_reports_failure
+      src: /data/lims_reports_failure
 
   #
   - name: Create lims_reports_offline directory
@@ -90,7 +90,7 @@
     ansible.builtin.file:
       path: /opt/ClientFileTransfer/offline
       state: link
-      dest: /data/lims_reports_offline
+      src: /data/lims_reports_offline
 
   #
   - name: Create lims_reports_logs directory
@@ -105,7 +105,7 @@
     ansible.builtin.file:
       path: /opt/ClientFileTransfer/logs
       state: link
-      dest: /data/lims_reports_logs
+      src: /data/lims_reports_logs
 
   #
   - name: Enable clientfiletransfer.service
