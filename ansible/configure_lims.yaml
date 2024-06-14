@@ -38,6 +38,7 @@
     ansible.builtin.systemd:
       daemon_reload: true
 
+  #
   - name: Create lims_reports directory
     ansible.builtin.file:
       path: /data/lims_reports
@@ -46,6 +47,7 @@
       group: prom
       mode: '0755'
 
+  #
   - name: Create lims_reports_success directory
     ansible.builtin.file:
       path: /data/lims_reports_success
@@ -54,6 +56,13 @@
       group: prom
       mode: '0755'
 
+  - name: Create success symlink
+    ansible.builtin.file:
+      path: /opt/ClientFileTransfer/success
+      state: link
+      dest: /data/lims_reports_success
+
+  #
   - name: Create lims_reports_failure directory
     ansible.builtin.file:
       path: /data/lims_reports_failure
@@ -62,6 +71,43 @@
       group: prom
       mode: '0755'
 
+  - name: Create failure symlink
+    ansible.builtin.file:
+      path: /opt/ClientFileTransfer/failure
+      state: link
+      dest: /data/lims_reports_failure
+
+  #
+  - name: Create lims_reports_offline directory
+    ansible.builtin.file:
+      path: /data/lims_reports_offline
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0755'
+
+  - name: Create offline symlink
+    ansible.builtin.file:
+      path: /opt/ClientFileTransfer/offline
+      state: link
+      dest: /data/lims_reports_offline
+
+  #
+  - name: Create lims_reports_logs directory
+    ansible.builtin.file:
+      path: /data/lims_reports_logs
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0755'
+
+  - name: Create logs symlink
+    ansible.builtin.file:
+      path: /opt/ClientFileTransfer/logs
+      state: link
+      dest: /data/lims_reports_logs
+
+  #
   - name: Enable clientfiletransfer.service
     ansible.builtin.systemd:
       name: clientfiletransfer
