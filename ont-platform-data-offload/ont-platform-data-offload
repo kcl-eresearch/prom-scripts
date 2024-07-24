@@ -43,6 +43,7 @@ LOCAL_COPY_DIR="/data/seq_reports"
 LIMS_COPY_SUFFIXES="${LIMS_COPY_SUFFIXES:-json}"
 LIMS_COPY_DIR="/data/lims_reports"
 MAX_TRANSFERS="${MAX_TRANSFERS:-5}"
+BW_LIMIT="${BW_LIMIT:-30M}"
 LOG="${LOG-/data/data-offload.log}" # leave empty to log to stdout
 DATE_FORMAT="${DATE_FORMAT:-%b %d %T}" # short month, day, hour, minute, second - mimics journalctl format
 DESTINATION_HOST="${DESTINATION_HOST:-}"
@@ -78,7 +79,7 @@ else
         exit 1
     fi
 
-    declare -a rsync_opts=( "--owner" "--group" "--perms" "--times" "--update" "--quiet" "--rsh" "ssh -i ${SSH_KEY} -o PasswordAuthentication=no" )
+    declare -a rsync_opts=( "--owner" "--group" "--perms" "--times" "--update" "--quiet" "--bwlimit=${BW_LIMIT}" "--rsh" "ssh -i ${SSH_KEY} -o PasswordAuthentication=no" )
     DESTINATION="${DESTINATION_USER}@${DESTINATION_HOST}:${DESTINATION_DIR}"
 fi
 
