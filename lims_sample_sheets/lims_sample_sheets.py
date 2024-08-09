@@ -3,9 +3,8 @@
 import os
 import re
 import socket
-import sys
 
-sheets_dir = "/data/sample_sheets/sample-sheets"
+sheets_dir = "/data/sample_sheets"
 data_dir = "/data/nihr_kcl_22k"
 hostname = socket.gethostname()
 
