@@ -9,7 +9,7 @@ data_dir = "/data/nihr_kcl_22k"
 hostname = socket.gethostname()
 
 for entry in os.scandir(sheets_dir):
-    if not re.match(r"^sample-sheet-csv.+\.csv$", entry.name):
+    if not re.match(r"^(Promethion|sample-sheet-csv).+\.csv$", entry.name):
         continue
 
     output_file = "%s/OUTPUT_%s" % (sheets_dir, entry.name)
