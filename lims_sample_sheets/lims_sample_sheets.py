@@ -35,7 +35,7 @@ for entry in os.scandir(sheets_dir):
         flow_cell_ids = []
         if os.path.isdir(sample_dir):
             for flow_cell_id in os.scandir(sample_dir):
-                if re.match(r"^[A-Z0-9]{8}$", flow_cell_id.name) and flow_cell_id.is_dir() and abs(os.stat(flow_cell_id.path).st_mtime - date) < 604800:
+                if re.match(r"^[A-Z0-9]{8}$", flow_cell_id.name) and flow_cell_id.is_dir() and abs(os.stat(flow_cell_id.path).st_mtime - date) < 2419200:
                     flow_cell_ids.append(flow_cell_id.name)
 
         if len(flow_cell_ids) == 1:
