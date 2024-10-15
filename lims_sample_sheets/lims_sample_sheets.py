@@ -42,8 +42,7 @@ for entry in os.scandir(sheets_dir):
             row["flow_cell_id"] = flow_cell_ids[0]
             matched += 1
 
-    if matched == len(data):
-        with open(output_file, "w") as f:
-            f.write(",".join(columns) + "\n")
-            for row in data:
-                f.write(",".join([row[col] for col in columns]) + "\n")
+    with open(output_file, "w") as f:
+        f.write(",".join(columns) + "\n")
+        for row in data:
+            f.write(",".join([row[col] for col in columns]) + "\n")
