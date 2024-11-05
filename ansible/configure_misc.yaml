@@ -94,3 +94,16 @@
       owner: root
       group: root
       mode: '0444'
+
+  - name: Configure systemd-timesyncd
+    ansible.builtin.copy:
+      src: files/misc/systemd-timesyncd.conf
+      dest: /etc/systemd/timesyncd.conf
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Restart systemd-timesyncd
+    ansible.builtin.systemd:
+      name: systemd-timesyncd
+      state: restarted
