@@ -71,3 +71,11 @@
       create: true
       marker: "# {mark} ANSIBLE MANAGED HOST KEY ont_offload"
       block: "{{ lookup('ansible.builtin.file', 'files/offload/host_keys/ont_offload') }}"
+
+  - name: Deploy rsync_log tidier cron
+    ansible.builtin.copy:
+      src: files/offload/tidy_rsync_logs.cron
+      dest: /etc/cron.d/tidy_rsync_logs
+      owner: root
+      group: root
+      mode: '0444'
