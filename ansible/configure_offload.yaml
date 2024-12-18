@@ -79,3 +79,11 @@
       owner: root
       group: root
       mode: '0444'
+
+  - name: Deploy seq_reports tidier cron
+    ansible.builtin.copy:
+      src: files/offload/tidy_seq_reports.cron
+      dest: /etc/cron.d/tidy_seq_reports
+      owner: root
+      group: root
+      mode: '0444'

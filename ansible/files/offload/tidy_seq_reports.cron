@@ -1,0 +1,3 @@
+# Managed by Ansible
+15 3 * * * prom /bin/find /data/seq_reports -name "report_*.html" -mtime +30 -delete > /dev/null
+30 3 * * * prom /bin/find /data/seq_reports -name "sequencing_summary_*.txt" -mtime +30 -delete > /dev/null
