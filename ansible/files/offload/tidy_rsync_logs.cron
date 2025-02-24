@@ -1,2 +1,2 @@
 # Managed by Ansible
-0 3 * * * prom /bin/find /data/rsync_logs -name "rsync_*.log" -mtime +30 -delete > /dev/null
+0 3 * * * prom /bin/find /data/rsync_logs -name "rsync_*.log" -mtime +7 -delete > /dev/null
