@@ -252,20 +252,19 @@ transfer() {
     # Emulate transfers of larger files:
     #sleep "$(( ((RANDOM % 25) + 5 ) ))"
 
+    RSYNC_ID="$(date -u +%s.%N).${RANDOM}"
+
     if [[ -d "${RSYNC_LOG_DIR}" ]]; then
-        rsync_log_file="${RSYNC_LOG_DIR}/rsync_$(date -u +%s.%N).${RANDOM}.log"
+        rsync_log_file="${RSYNC_LOG_DIR}/rsync_${RSYNC_ID}.log"
     else
         rsync_log_file="/dev/null"
     fi
 
-    # Rsync all directories and the file we want to transfer.
-    # Maybe not an obvious way of doing this but only requires one fork.
+    echo "${file#.}" > "/tmp/rsync_file_${RSYNC_ID}.txt"
+
     rsync_output=$(rsync "${rsync_opts[@]}" \
-        --recursive \
         --remove-source-files \
-        --filter '+ */' \
-        --filter "+ ${file#.}" \
-        --filter '- *' \
+        --files-from="/tmp/rsync_file_${RSYNC_ID}.txt" \
         --stats \
         --log-file "${rsync_log_file}" \
         ./ "${DESTINATION}" 2>&1)
