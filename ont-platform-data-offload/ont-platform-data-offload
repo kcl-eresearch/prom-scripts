@@ -270,6 +270,8 @@ transfer() {
         ./ "${DESTINATION}" 2>&1)
     [[ -n ${rsync_output} ]] && local_log " - rsync: ${rsync_output}"
 
+    rm "/tmp/rsync_file_${RSYNC_ID}.txt"
+
     # Alternative 1
     #rsync "${rsync_opts[@]}" --recursive --filter '+ */' --filter '- *'  ./ "${DESTINATION}"
     #rsync "${rsync_opts[@]}" --remove-source-files "${file}" "${DESTINATION}${file#.}"
