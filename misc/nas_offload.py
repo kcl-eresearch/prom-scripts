@@ -46,9 +46,9 @@ def get_files(directory):
                 return files
             if any(filename.endswith(f".{suffix}") for suffix in suffixes):
                 filepath = os.path.join(root, filename)
-                if args.minimum_size:
+                if args.min_size:
                     statinfo = os.stat(filepath)
-                    if statinfo.st_size < args.minimum_size * 1000 * 1000:
+                    if statinfo.st_size < args.min_size * 1000 * 1000:
                         continue
                 files.append(os.path.relpath(filepath, directory))
     return collections.deque(files)
