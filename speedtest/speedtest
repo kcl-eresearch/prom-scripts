@@ -38,25 +38,30 @@ def thread_worker(label, address):
     while len(dd_done) < len(args.src_host):
         time.sleep(0.1)
 
-    start_time = datetime.datetime.now()
-    rsync_result = ssh_command(address, f"/usr/bin/rsync -e 'ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no' --stats --remove-source-files {src_file} {args.dst_user}@{args.dst_host}:{args.dst_dir}")
-    ssh_command(address, f"/usr/bin/ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no {args.dst_user}@{args.dst_host} rm -f {args.dst_dir}/{filename}")
+    for i in range(args.runs):
+        label = f"{label}_{i}"
+        start_time = datetime.datetime.now()
+        rsync_result = ssh_command(address, f"/usr/bin/rsync -e 'ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no' --stats {src_file} {args.dst_user}@{args.dst_host}:{args.dst_dir}")
+        ssh_command(address, f"/usr/bin/ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no {args.dst_user}@{args.dst_host} rm -f {args.dst_dir}/{filename}")
 
-    speed = None
-    for line in rsync_result.stdout.splitlines():
-        m = re.search(r" ([0-9,.]+) bytes/sec$", line)
-        if m:
-            speed = float(m.group(1).replace(",", ""))
+        speed = None
+        for line in rsync_result.stdout.splitlines():
+            m = re.search(r" ([0-9,.]+) bytes/sec$", line)
+            if m:
+                speed = float(m.group(1).replace(",", ""))
 
-    if not speed:
-        sys.stderr.write(f"Could not determine speed of rsync for {label}\n")
-        os._exit(1)
+        if not speed:
+            sys.stderr.write(f"Could not determine speed of rsync for {label}\n")
+            os._exit(1)
 
-    result = {
-        "duration": (datetime.datetime.now() - start_time).total_seconds(),
-        "speed": speed,
-    }
-    results["stats"]["individual"][label] = result
+        result = {
+            "duration": (datetime.datetime.now() - start_time).total_seconds(),
+            "speed": speed,
+        }
+        results["stats"]["individual"][label] = result
+
+        if i == (args.runs - 1):
+            ssh_command(address, f"/usr/bin/rm -f {src_file}")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--src_host", action="append", required=True, help="Re-use option for each source prom")
@@ -67,6 +72,7 @@ parser.add_argument("--dst_user", required=True, help="Destination server userna
 parser.add_argument("--dst_dir", required=True, help="Destination server directory")
 parser.add_argument("--file_size", type=int, default=5120, help="Size of copied file (mebibytes)")
 parser.add_argument("--threads", type=int, default=1, help="Threads per source")
+parser.add_argument("--runs", type=int, default=1, help="Number of runs to perform")
 args = parser.parse_args()
 
 src_hosts = []
@@ -85,6 +91,7 @@ results["start_utc"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 results["config"] = {}
 results["config"]["destination"] = {"host": args.dst_host, "dir": args.dst_dir}
 results["config"]["file_size"] = args.file_size * 1024 * 1024
+results["config"]["runs"] = args.runs
 results["stats"] = {}
 results["stats"]["individual"] = {}
 results["stats"]["combined"] = {}
@@ -103,8 +110,14 @@ for t in threads:
     t.join()
 
 results["stats"]["combined"]["speed_total"] = 0
+results["stats"]["combined"]["speed_min"] = float("inf")
+results["stats"]["combined"]["speed_max"] = 0
 for dest_addr, dest_stats in results["stats"]["individual"].items():
     results["stats"]["combined"]["speed_total"] += dest_stats["speed"]
-results["stats"]["combined"]["speed_average"] = results["stats"]["combined"]["speed_total"] / len(args.src_host)
+    if dest_stats["speed"] < results["stats"]["combined"]["speed_min"]:
+        results["stats"]["combined"]["speed_min"] = dest_stats["speed"]
+    if dest_stats["speed"] > results["stats"]["combined"]["speed_max"]:
+        results["stats"]["combined"]["speed_max"] = dest_stats["speed"]
+results["stats"]["combined"]["speed_average"] = results["stats"]["combined"]["speed_total"] / (len(args.src_host) * args.runs)
 
 print(yaml.dump(results, default_flow_style=False))
