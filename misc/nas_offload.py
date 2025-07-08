@@ -86,7 +86,7 @@ def thread_worker():
         ])
 
         print(f"Running command: {' '.join(command)}")
-        #subprocess.run(command, check=True, text=True)
+        subprocess.run(command, check=True, text=True)
 
 if os.path.exists(lock_file):
     sys.exit(f"Lock file {lock_file} exists. Another instance may be running.")
