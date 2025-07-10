@@ -4,6 +4,7 @@ import argparse
 import collections
 import datetime
 import os
+import random
 import re
 import subprocess
 import sys
@@ -36,6 +37,7 @@ def thread_worker(label, address):
     dd_done[label] = True
 
     while len(dd_done) < len(args.src_host):
+        sys.stderr.write(f"Waiting for dd to finish on {label}...\n")
         time.sleep(0.1)
 
     for i in range(args.runs):
@@ -78,7 +80,8 @@ args = parser.parse_args()
 src_hosts = []
 for i in range(args.threads):
     for src_host in args.src_host:
-        src_hosts.append({"label": f"{src_host}_{i}", "address": src_host})
+        r = random.randint(0, 1000000)
+        src_hosts.append({"label": f"{src_host}_{i}_{r}", "address": src_host})
 
 src_hosts = collections.deque(src_hosts)
 src_count = len(src_hosts)
@@ -104,6 +107,7 @@ while src_hosts:
 
     while len(threads) >= src_count:
         threads = [thread for thread in threads if thread.is_alive()]
+        sys.stderr.write("Waiting for threads to finish...\n")
         time.sleep(1)
 
 for t in threads:
