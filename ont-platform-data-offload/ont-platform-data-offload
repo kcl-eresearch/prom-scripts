@@ -287,6 +287,7 @@ transfer() {
 local_log() {
     if [[ -n ${LOG} ]]; then
         echo "$(date "+$DATE_FORMAT") $*" >> "${LOG}"
+        echo "$*" | /usr/bin/logger -t ont-platform-data-offload
     else
         echo "$(date "+$DATE_FORMAT") $*"
     fi

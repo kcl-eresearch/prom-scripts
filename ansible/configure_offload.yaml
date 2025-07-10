@@ -87,3 +87,11 @@
       owner: root
       group: root
       mode: '0444'
+
+  - name: Configure log rotation for data-offload.log
+    ansible.builtin.copy:
+      src: files/offload/ont-platform-data-offload.logrotate
+      dest: /etc/logrotate.d/ont-platform-data-offload
+      owner: root
+      group: root
+      mode: '0444'

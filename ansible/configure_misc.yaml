@@ -107,3 +107,11 @@
     ansible.builtin.systemd:
       name: systemd-timesyncd
       state: restarted
+
+  - name: Configure rsyslog forwarding
+    ansible.builtin.copy:
+      src: files/misc/rsyslog_forward.conf
+      dest: /etc/rsyslog.d/rsyslog_forward.conf
+      owner: root
+      group: root
+      mode: '0444'

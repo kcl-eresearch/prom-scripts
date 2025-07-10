@@ -1,0 +1,9 @@
+# Managed by Ansible
+/data/data-offload.log {
+    weekly
+    missingok
+    rotate 100
+    compress
+    delaycompress
+    notifempty
+}
