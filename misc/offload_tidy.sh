@@ -9,4 +9,4 @@ if [ -z "${SOURCE_DIR}" ]; then
     exit 1
 fi
 
-/usr/bin/find "${SOURCE_DIR}" -type d -mtime +30 | /usr/bin/sort -r | /usr/bin/xargs rmdir -v
+/usr/bin/find "${SOURCE_DIR}" -type d -mtime +7 | /usr/bin/sort -r | /usr/bin/xargs rmdir -v

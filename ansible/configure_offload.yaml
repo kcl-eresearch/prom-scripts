@@ -95,3 +95,19 @@
       owner: root
       group: root
       mode: '0444'
+
+  - name: Deploy offload_tidy.sh
+    ansible.builtin.copy:
+      src: files/offload/offload_tidy.sh
+      dest: /usr/local/bin/offload_tidy
+      owner: root
+      group: root
+      mode: '0755'
+
+  - name: Deploy offload_tidy.cron
+    ansible.builtin.copy:
+      src: files/offload/offload_tidy.cron
+      dest: /etc/cron.d/offload_tidy
+      owner: root
+      group: root
+      mode: '0444'

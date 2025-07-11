@@ -1,0 +1,2 @@
+# Managed by Ansible
+0 4 * * * prom /usr/local/bin/offload_tidy | /usr/bin/logger -t offload_tidy
