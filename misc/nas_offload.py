@@ -32,6 +32,7 @@ parser.add_argument("--batch_size", type=int, default=50, help="Number of files 
 parser.add_argument("--threads", type=int, default=5, help="Number of threads to use for copying files")
 parser.add_argument("--min_size", type=int, default=0, help="Minimum file size in MB to consider for copying")
 parser.add_argument("--dry_run", action="store_true", help="Perform a dry run without copying files")
+parser.add_argument("--control_persist", action="store_true", help="Use SSH ControlPersist for rsync connections")
 args = parser.parse_args()
 
 suffixes = ["fast5", "pod5", "fastq", "fastq.gz", "txt", "html", "pdf", "bam", "bam.bai", "csv", "json", "tsv", "md"]
@@ -69,6 +70,10 @@ def thread_worker():
             f.write(to_copy_joined)
             f.write("\n")
 
+        ssh_command = f"ssh -i {args.ssh_key} -o PasswordAuthentication=no -o"
+        if args.control_persist:
+            ssh_command += " ControlMaster=auto -o ControlPersist=yes -o ControlPath=~/.ssh/control_rsync_%C"
+
         command = ["/usr/bin/rsync"]
 
         if args.dry_run:
@@ -77,7 +82,7 @@ def thread_worker():
         command.extend([
             "--perms",
             "--times",
-            "--rsh", f"ssh -i {args.ssh_key} -o PasswordAuthentication=no -o ControlMaster=auto -o ControlPersist=yes -o ControlPath=~/.ssh/control_rsync_%C",
+            "--rsh", ssh_command,
             "--log-file", os.path.join(args.logs_directory, f"{job_id}.log"),
             "--files-from", job_file,
             "--remove-source-files",
