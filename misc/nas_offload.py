@@ -70,9 +70,9 @@ def thread_worker():
             f.write(to_copy_joined)
             f.write("\n")
 
-        ssh_command = f"ssh -i {args.ssh_key} -o PasswordAuthentication=no -o"
+        ssh_command = f"ssh -i {args.ssh_key} -o PasswordAuthentication=no"
         if args.control_persist:
-            ssh_command += " ControlMaster=auto -o ControlPersist=yes -o ControlPath=~/.ssh/control_rsync_%C"
+            ssh_command += " -o ControlMaster=auto -o ControlPersist=yes -o ControlPath=~/.ssh/control_rsync_%C"
 
         command = ["/usr/bin/rsync"]
 
