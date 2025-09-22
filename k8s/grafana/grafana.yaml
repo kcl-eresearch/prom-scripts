@@ -3,13 +3,24 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   namespace: nihr-22k
-  name: grafana-pvc
+  name: grafana-storage
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-provisioning-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -64,10 +75,48 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/grafana
               name: grafana-pv
+            - mountPath: /etc/grafana/provisioning
+              name: grafana-provisioning-pv
+          env:
+            # Set correct URL for Grafana
+            - name: GF_SERVER_ROOT_URL
+              value: https://nihr-22k-grafana.er.kcl.ac.uk
+            # Configure admin username and password from secrets
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin-credentials
+                  key: username
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin-credentials
+                  key: password
+
+            # Configure SMTP for sending emails
+            - name: GF_SMTP_ENABLED
+              value: "true"
+            - name: GF_SMTP_HOST
+              value: "mta.er.kcl.ac.uk:465"
+            - name: GF_SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-smtp-credentials
+                  key: username
+            - name: GF_SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-smtp-credentials
+                  key: password
+            - name: GF_SMTP_FROM_ADDRESS
+              value: "noreply@er.kcl.ac.uk"
       volumes:
         - name: grafana-pv
           persistentVolumeClaim:
-            claimName: grafana-pvc
+            claimName: grafana-storage
+        - name: grafana-provisioning-pv
+          persistentVolumeClaim:
+            claimName: grafana-provisioning-pvc
 ---
 apiVersion: v1
 kind: Service
