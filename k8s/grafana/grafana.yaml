@@ -44,7 +44,7 @@ spec:
           - 0
       containers:
         - name: grafana
-          image: grafana/grafana:latest
+          image: grafana/grafana:12.3.0-17932099756
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -110,6 +110,9 @@ spec:
                   key: password
             - name: GF_SMTP_FROM_ADDRESS
               value: "noreply@er.kcl.ac.uk"
+
+            - name: GF_PUBLIC_DASHBOARDS_ENABLED
+              value: "false"
       volumes:
         - name: grafana-pv
           persistentVolumeClaim:
