@@ -90,15 +90,16 @@ shutil.rmtree(working_dir)
 
 exit_code = 0
 
-try:
-    smtp = smtplib.SMTP(config["mail_host"], config["mail_port"])
-    smtp.starttls(context=ssl.create_default_context())
-    smtp.login(config["mail_username"], config["mail_password"])
-    smtp.sendmail(config["mail_from"], config["mail_to"], "To: %s\nSubject: MinKNOW Device Errors\n\n%s" % (",".join(config["mail_to"]), "\n".join(errors)))
-    smtp.quit()
-except Exception as e:
-    sys.stderr.write("Failed sending message: %s\n" % e)
-    exit_code = 1
+if len(errors) > 0:
+    try:
+        smtp = smtplib.SMTP(config["mail_host"], config["mail_port"])
+        smtp.starttls(context=ssl.create_default_context())
+        smtp.login(config["mail_username"], config["mail_password"])
+        smtp.sendmail(config["mail_from"], config["mail_to"], "To: %s\nSubject: MinKNOW Device Errors\n\n%s" % (",".join(config["mail_to"]), "\n".join(errors)))
+        smtp.quit()
+    except Exception as e:
+        sys.stderr.write("Failed sending message: %s\n" % e)
+        exit_code = 1
 
 if exit_code == 0:
     with open(STATE_FILE, "w") as fh:
