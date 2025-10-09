@@ -18,6 +18,7 @@ import os
 import subprocess
 import sys
 import threading
+import time
 import yaml
 
 parser = argparse.ArgumentParser()
@@ -31,6 +32,7 @@ parser.add_argument("--file_count", type=int, default=1000, help="Maximum number
 parser.add_argument("--batch_size", type=int, default=50, help="Number of files to copy in each batch")
 parser.add_argument("--threads", type=int, default=5, help="Number of threads to use for copying files")
 parser.add_argument("--min_size", type=int, default=0, help="Minimum file size in MB to consider for copying")
+parser.add_argument("--min_age", type=int, default=0, help="Minimum file age in days to consider for copying")
 parser.add_argument("--dry_run", action="store_true", help="Perform a dry run without copying files")
 parser.add_argument("--control_persist", action="store_true", help="Use SSH ControlPersist for rsync connections")
 args = parser.parse_args()
@@ -47,9 +49,11 @@ def get_files(directory):
                 return files
             if any(filename.endswith(f".{suffix}") for suffix in suffixes):
                 filepath = os.path.join(root, filename)
-                if args.min_size:
+                if args.min_size or args.min_age:
                     statinfo = os.stat(filepath)
-                    if statinfo.st_size < args.min_size * 1000 * 1000:
+                    if args.min_size and statinfo.st_size < args.min_size * 1000 * 1000:
+                        continue
+                    if args.min_age and (time.time() - statinfo.st_mtime) < args.min_age * 86400:
                         continue
                 files.append(os.path.relpath(filepath, directory))
     return collections.deque(files)
