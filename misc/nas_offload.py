@@ -46,7 +46,7 @@ def get_files(directory):
     for root, _, filenames in os.walk(directory):
         for filename in filenames:
             if len(files) >= args.file_count:
-                return files
+                return collections.deque(files)
             if any(filename.endswith(f".{suffix}") for suffix in suffixes):
                 filepath = os.path.join(root, filename)
                 if args.min_size or args.min_age:
