@@ -111,3 +111,11 @@
       owner: root
       group: root
       mode: '0444'
+
+  - name: Deploy nas_offload.py
+    ansible.builtin.copy:
+      src: ../misc/nas_offload.py
+      dest: /usr/local/bin/nas_offload
+      owner: root
+      group: root
+      mode: '0755'
