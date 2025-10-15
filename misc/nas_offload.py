@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 #
-# Alternative version of offload script to run on NAS.
+# Alternative version of offload script to run on NAS etc.
+# Xand Meaden, King's College London, 2025
 #
 # WARNING !!!
 # WARNING !!!
 # WARNING !!!
-# This script should not be run directly on a Prom, as it does not check for files being open.
+# This script should not be run directly on a Prom, unless --min_age is set to > 0.
+# This is to prevent files being copied before they are completely written.
 # This is not an issue when files have already been copied using rsync.
 # WARNING !!!
 # WARNING !!!
@@ -32,7 +34,7 @@ parser.add_argument("--file_count", type=int, default=1000, help="Maximum number
 parser.add_argument("--batch_size", type=int, default=50, help="Number of files to copy in each batch")
 parser.add_argument("--threads", type=int, default=5, help="Number of threads to use for copying files")
 parser.add_argument("--min_size", type=int, default=0, help="Minimum file size in MB to consider for copying")
-parser.add_argument("--min_age", type=int, default=0, help="Minimum file age in days to consider for copying")
+parser.add_argument("--min_age", type=int, required=True, help="Minimum file age in days to consider for copying")
 parser.add_argument("--dry_run", action="store_true", help="Perform a dry run without copying files")
 parser.add_argument("--control_persist", action="store_true", help="Use SSH ControlPersist for rsync connections")
 args = parser.parse_args()
