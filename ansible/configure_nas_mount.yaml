@@ -1,0 +1,27 @@
+---
+- name: Configure NAS mount
+  hosts: all
+  remote_user: sysadmin
+  become: true
+
+  tasks:
+  - name: Read prom_names
+    ansible.builtin.include_vars:
+      file: configs/prom_names.yaml
+      name: prom_names
+
+  - name: Create /data/nas_mount directory
+    ansible.builtin.file:
+      path: /data/nas
+      state: directory
+      owner: root
+      group: prom
+      mode: '0750'
+
+  - name: Mount NAS
+    ansible.posix.mount:
+      path: /mnt/nas
+      state: mounted
+      src: "{{lookup('ansible.builtin.file', 'configs/nas_address')}}:/data/{{prom_names[ansible_hostname]}}"
+      fstype: nfs
+      opts: rw,noatime,nosuid

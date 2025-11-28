@@ -1,0 +1,98 @@
+---
+- name: Configure offload service to NAS
+  hosts: all
+  remote_user: sysadmin
+  become: true
+
+  tasks:
+  - name: Deploy ont-platform-data-offload
+    ansible.builtin.copy:
+      src: ../ont-platform-data-offload/ont-platform-data-offload
+      dest: /opt/ont/platform/sbin/ont-platform-data-offload
+      owner: root
+      group: root
+      mode: '0755'
+
+  - name: Deploy ont-platform-data-offload.service
+    ansible.builtin.copy:
+      src: ../ont-platform-data-offload/ont-platform-data-offload.service
+      dest: /lib/systemd/system/ont-platform-data-offload.service
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Systemd daemon-reload
+    ansible.builtin.systemd:
+      daemon_reload: true
+
+  - name: Deploy ont-platform-data-offload.conf
+    ansible.builtin.copy:
+      src: files/offload/ont-platform-data-offload_nas.conf
+      dest: /etc/systemd/ont-platform-data-offload.conf
+      owner: root
+      group: prom
+      mode: '0440'
+
+  - name: Create rsync_logs directory
+    ansible.builtin.file:
+      path: /data/rsync_logs
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0750'
+
+  - name: Create seq_reports directory
+    ansible.builtin.file:
+      path: /data/seq_reports
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0755'
+
+  - name: Create lims_reports directory
+    ansible.builtin.file:
+      path: /data/lims_reports
+      state: directory
+      owner: prom
+      group: prom
+      mode: '0755'
+
+  - name: Deploy rsync_log tidier cron
+    ansible.builtin.copy:
+      src: files/offload/tidy_rsync_logs.cron
+      dest: /etc/cron.d/tidy_rsync_logs
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Deploy seq_reports tidier cron
+    ansible.builtin.copy:
+      src: files/offload/tidy_seq_reports.cron
+      dest: /etc/cron.d/tidy_seq_reports
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Configure log rotation for data-offload.log
+    ansible.builtin.copy:
+      src: files/offload/ont-platform-data-offload.logrotate
+      dest: /etc/logrotate.d/ont-platform-data-offload
+      owner: root
+      group: root
+      mode: '0444'
+
+  - name: Deploy offload_tidy.sh
+    ansible.builtin.copy:
+      src: files/offload/offload_tidy.sh
+      dest: /usr/local/bin/offload_tidy
+      owner: root
+      group: root
+      mode: '0755'
+
+  - name: Deploy offload_tidy.cron
+    ansible.builtin.copy:
+      src: files/offload/offload_tidy.cron
+      dest: /etc/cron.d/offload_tidy
+      owner: root
+      group: root
+      mode: '0444'
