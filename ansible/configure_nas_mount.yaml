@@ -12,7 +12,7 @@
 
   - name: Create /data/nas_mount directory
     ansible.builtin.file:
-      path: /data/nas
+      path: /mnt/nas
       state: directory
       owner: root
       group: prom
