@@ -115,3 +115,9 @@
       owner: root
       group: root
       mode: '0444'
+
+  - name: Install TeamViewer
+    environment:
+      https_proxy: http://10.181.249.6:3128
+    ansible.builtin.apt:
+      deb: https://download.teamviewer.com/download/linux/teamviewer_amd64.deb
