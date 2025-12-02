@@ -121,3 +121,13 @@
       https_proxy: http://10.181.249.6:3128
     ansible.builtin.apt:
       deb: https://download.teamviewer.com/download/linux/teamviewer_amd64.deb
+      state: present
+      update_cache: true
+
+  - name: Deploy lims_sample_sheets
+    ansible.builtin.copy:
+      src: ../lims_sample_sheets/lims_sample_sheets.py
+      dest: /usr/local/bin/lims_sample_sheets
+      owner: root
+      group: root
+      mode: '0555'
