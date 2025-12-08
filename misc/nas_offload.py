@@ -17,6 +17,7 @@ import argparse
 import collections
 import hashlib
 import os
+import random
 import subprocess
 import sys
 import threading
@@ -59,6 +60,10 @@ def get_files(directory):
 
 def thread_worker():
     global files
+
+    # wait a few seconds to stagger threads
+    time.sleep(random.uniform(0, 10))
+
     while files:
         to_copy = []
         while len(to_copy) < args.batch_size and files:
