@@ -7,14 +7,14 @@
   tasks:
   - name: Deploy influxdata package signing key
     ansible.builtin.copy:
-      src: files/telegraf/influxdata-archive_compat.key
-      dest: /root/influxdata-archive_compat.key
+      src: files/telegraf/influxdata-archive.key
+      dest: /root/influxdata-archive.key
       owner: root
       group: root
       mode: '0444'
 
   - name: Install influxdata package signing key
-    ansible.builtin.shell: "/bin/test -s /etc/apt/trusted.gpg.d/influxdata.gpg || /usr/bin/gpg --batch --dearmor -o /etc/apt/trusted.gpg.d/influxdata.gpg < /root/influxdata-archive_compat.key"
+    ansible.builtin.shell: "/usr/bin/gpg --keyring /etc/apt/trusted.gpg.d/influxdata.gpg --list-keys | /usr/bin/grep AC10D7449F343ADCEFDDC2B6DA61C26A0585BD3B || /usr/bin/gpg --batch --dearmor -o /etc/apt/trusted.gpg.d/influxdata.gpg < /root/influxdata-archive.key"
 
   - name: Install influxdata repository
     ansible.builtin.apt_repository:
