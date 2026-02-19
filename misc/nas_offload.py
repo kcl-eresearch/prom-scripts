@@ -34,12 +34,15 @@ parser.add_argument("--ssh_key", default=os.environ.get("SSH_KEY"), help="Path t
 parser.add_argument("--batch_size", type=int, default=50, help="Number of files to copy in each batch")
 parser.add_argument("--threads", type=int, default=int(os.environ.get("MAX_TRANSFERS", 5)), help="Number of threads to use for copying files")
 parser.add_argument("--min_size", type=int, default=0, help="Minimum file size in MB to consider for copying")
-parser.add_argument("--min_age", type=int, default=0, help="Minimum file age in days to consider for copying")
+parser.add_argument("--min_age", type=float, default=0.25, help="Minimum file age in days to consider for copying")
 parser.add_argument("--dry_run", action="store_true", help="Perform a dry run without copying files")
 parser.add_argument("--control_persist", action="store_true", help="Use SSH ControlPersist for rsync connections")
+parser.add_argument("--skip_suffix", action="append", help="File suffix to skip (can be specified multiple times)")
 args = parser.parse_args()
 
 suffixes = ["fast5", "pod5", "fastq", "fastq.gz", "txt", "html", "pdf", "bam", "bam.bai", "csv", "json", "tsv", "md"]
+if args.skip_suffix:
+    suffixes = [s for s in suffixes if s not in args.skip_suffix]
 lock_file = f"/tmp/nas_offload_lock_{hashlib.sha256(args.source_directory.encode()).hexdigest()}.yaml"
 
 def get_files(directory):
