@@ -27,6 +27,7 @@ import yaml
 parser = argparse.ArgumentParser()
 parser.add_argument("--source_directory", default=os.environ.get("SOURCE_DIR"), help="Source directory to copy files from")
 parser.add_argument("--destination_directory", default=os.environ.get("DESTINATION_DIR"), help="Destination directory to copy files to")
+parser.add_argument("--destination_directory_fallback", help="Fallback destination directory to copy files to if the primary destination is unavailable")
 parser.add_argument("--logs_directory", default=os.environ.get("RSYNC_LOG_DIR", "/data/rsync_logs"), help="Directory to store rsync logs")
 parser.add_argument("--ssh_user", default=os.environ.get("DESTINATION_USER"), help="SSH user for the remote server")
 parser.add_argument("--ssh_host", default=os.environ.get("DESTINATION_HOST"), help="SSH host for the remote server")
@@ -102,7 +103,20 @@ def thread_worker():
         ])
 
         print(f"Running command: {' '.join(command)}")
-        subprocess.run(command, check=True, text=True)
+
+        try:
+            subprocess.run(command, check=True, text=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error running rsync for job {job_id}: {e}")
+            if args.destination_directory_fallback:
+                fallback_command = command.copy()
+                fallback_command[-1] = f"{args.ssh_user}@{args.ssh_host}:{args.destination_directory_fallback}"
+                print(f"Running fallback command: {' '.join(fallback_command)}")
+                try:
+                    subprocess.run(fallback_command, check=True, text=True)
+                except subprocess.CalledProcessError as e:
+                    print(f"Error running fallback rsync for job {job_id}: {e}")
+            continue
 
 if os.path.exists(lock_file):
     sys.exit(f"Lock file {lock_file} exists. Another instance may be running.")
