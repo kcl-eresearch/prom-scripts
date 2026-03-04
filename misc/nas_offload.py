@@ -91,6 +91,14 @@ def thread_worker():
         if args.dry_run:
             command.append("-nv")
 
+        destination_directory = args.destination_directory
+        destination_directory_fallback = None
+        if args.destination_directory_fallback:
+            destination_directories = [args.destination_directory, args.destination_directory_fallback]
+            random.shuffle(destination_directories)
+            destination_directory = destination_directories[0]
+            destination_directory_fallback = destination_directories[1]
+
         command.extend([
             "--perms",
             "--times",
@@ -99,7 +107,7 @@ def thread_worker():
             "--files-from", job_file,
             "--remove-source-files",
             args.source_directory,
-            f"{args.ssh_user}@{args.ssh_host}:{args.destination_directory}",
+            f"{args.ssh_user}@{args.ssh_host}:{destination_directory}",
         ])
 
         print(f"Running command: {' '.join(command)}")
@@ -108,9 +116,9 @@ def thread_worker():
             subprocess.run(command, check=True, text=True)
         except subprocess.CalledProcessError as e:
             print(f"Error running rsync for job {job_id}: {e}")
-            if args.destination_directory_fallback:
+            if destination_directory_fallback:
                 fallback_command = command.copy()
-                fallback_command[-1] = f"{args.ssh_user}@{args.ssh_host}:{args.destination_directory_fallback}"
+                fallback_command[-1] = f"{args.ssh_user}@{args.ssh_host}:{destination_directory_fallback}"
                 print(f"Running fallback command: {' '.join(fallback_command)}")
                 try:
                     subprocess.run(fallback_command, check=True, text=True)
