@@ -15,8 +15,10 @@
 
 import argparse
 import collections
+import datetime
 import hashlib
 import os
+import psutil
 import random
 import subprocess
 import sys
@@ -127,10 +129,23 @@ def thread_worker():
             continue
 
 if os.path.exists(lock_file):
-    sys.exit(f"Lock file {lock_file} exists. Another instance may be running.")
+    try:
+        with open(lock_file) as f:
+            lock_info = yaml.safe_load(f)
+    except:
+        lock_info = None
+
+    if lock_info and "pid" in lock_info:
+        pid = lock_info["pid"]
+        if psutil.pid_exists(pid):
+            sys.exit(f"Another instance is running with PID {pid}.")
 
 with open(lock_file, "w") as f:
-    yaml.dump(vars(args), f)
+    yaml.dump({
+        "args": vars(args),
+        "pid": os.getpid(),
+        "start_time": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+    }, f)
 
 try:
     files = get_files(args.source_directory)
