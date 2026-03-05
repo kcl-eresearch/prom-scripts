@@ -138,7 +138,8 @@ if os.path.exists(lock_file):
     if lock_info and "pid" in lock_info:
         pid = lock_info["pid"]
         if psutil.pid_exists(pid):
-            sys.exit(f"Another instance is running with PID {pid}.")
+            start_time = lock_info.get("start_time", "unknown time")
+            sys.exit(f"Another instance is running with PID {pid}, since {start_time}.")
 
 with open(lock_file, "w") as f:
     yaml.dump({
