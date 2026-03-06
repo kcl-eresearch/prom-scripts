@@ -64,6 +64,17 @@ def get_files(directory):
                 files.append(os.path.relpath(filepath, directory))
     return collections.deque(files)
 
+def test_destination(path):
+    test_file = os.path.join(path, ".rsync_test_%d_%05d.tmp" % (time.time(), random.randint(0, 100000)))
+    try:
+        subprocess.run(["ssh", "-i", args.ssh_key, "-o", "PasswordAuthentication=no", f"{args.ssh_user}@{args.ssh_host}", f"date > {test_file}"], check=True)
+        result = True
+    except Exception as e:
+        result = False
+    finally:
+        subprocess.run(["ssh", "-i", args.ssh_key, "-o", "PasswordAuthentication=no", f"{args.ssh_user}@{args.ssh_host}", "rm", "-f", test_file], check=True)
+    return result
+
 def thread_worker():
     global files
 
@@ -94,12 +105,13 @@ def thread_worker():
             command.append("-nv")
 
         destination_directory = args.destination_directory
-        destination_directory_fallback = None
-        if args.destination_directory_fallback:
-            destination_directories = [args.destination_directory, args.destination_directory_fallback]
-            random.shuffle(destination_directories)
-            destination_directory = destination_directories[0]
-            destination_directory_fallback = destination_directories[1]
+        if not test_destination(destination_directory):
+            if args.destination_directory_fallback and test_destination(args.destination_directory_fallback):
+                print(f"Primary destination {destination_directory} is unavailable, switching to fallback {args.destination_directory_fallback}")
+                destination_directory = args.destination_directory_fallback
+            else:
+                sys.stderr.write(f"Primary destination {destination_directory} is unavailable, and no valid fallback is configured. Skipping batch.\n")
+                continue
 
         command.extend([
             "--perms",
@@ -118,14 +130,6 @@ def thread_worker():
             subprocess.run(command, check=True, text=True)
         except subprocess.CalledProcessError as e:
             print(f"Error running rsync for job {job_id}: {e}")
-            if destination_directory_fallback:
-                fallback_command = command.copy()
-                fallback_command[-1] = f"{args.ssh_user}@{args.ssh_host}:{destination_directory_fallback}"
-                print(f"Running fallback command: {' '.join(fallback_command)}")
-                try:
-                    subprocess.run(fallback_command, check=True, text=True)
-                except subprocess.CalledProcessError as e:
-                    print(f"Error running fallback rsync for job {job_id}: {e}")
             continue
 
 if os.path.exists(lock_file):
